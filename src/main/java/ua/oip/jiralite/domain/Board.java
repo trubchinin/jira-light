@@ -1,60 +1,35 @@
 package ua.oip.jiralite.domain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-
-@Entity
-@Table(name = "boards")
+/**
+ * Дошка (Kanban) із колонками.
+ */
 public class Board extends BaseEntity {
-    
-    @Column(name = "name", nullable = false)
-    private String name;
-    
-    @Column(name = "description")
-    private String description;
-    
-    @ManyToOne
-    @JoinColumn(name = "project_id", nullable = false)
+
+    private final List<BoardColumn> columns = new ArrayList<>();
     private Project project;
     
-    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<BoardColumn> columns = new ArrayList<>();
-    
+    /**
+     * Створює нову дошку зі стандартними колонками
+     */
     public Board() {
-        // Ініціалізуємо стандартні колонки
-        addColumn(new BoardColumn("To Do", "Tasks that need to be completed"));
-        addColumn(new BoardColumn("In Progress", "Tasks that are currently being worked on"));
-        addColumn(new BoardColumn("Done", "Completed tasks"));
+        // Створюємо стандартні колонки
+        columns.add(new BoardColumn("To Do", 1));
+        columns.add(new BoardColumn("In Progress", 2));
+        columns.add(new BoardColumn("Done", 3));
     }
     
-    public Board(String name, String description) {
+    public Board(Project project) {
         this();
-        this.name = name;
-        this.description = description;
+        this.project = project;
     }
-    
-    public String getName() {
-        return name;
-    }
-    
-    public void setName(String name) {
-        this.name = name;
-    }
-    
-    public String getDescription() {
-        return description;
-    }
-    
-    public void setDescription(String description) {
-        this.description = description;
+
+    // ── Гетери і сетери ───────────────────────────────────────────────────────
+    public List<BoardColumn> getColumns() { 
+        return Collections.unmodifiableList(columns); 
     }
     
     public Project getProject() {
@@ -65,28 +40,55 @@ public class Board extends BaseEntity {
         this.project = project;
     }
     
-    public List<BoardColumn> getColumns() {
-        return columns;
+    /**
+     * Шукає колонку за назвою
+     * @param name назва колонки
+     * @return знайдена колонка або null, якщо не знайдено
+     */
+    public BoardColumn findColumn(String name) {
+        return columns.stream()
+                .filter(col -> col.getName().equals(name))
+                .findFirst()
+                .orElse(null);
     }
     
-    public void setColumns(List<BoardColumn> columns) {
-        this.columns = columns;
-    }
-    
+    /**
+     * Додати нову колонку до дошки
+     * @param column колонка для додавання
+     */
     public void addColumn(BoardColumn column) {
         columns.add(column);
         column.setBoard(this);
+        touch();
     }
     
+    /**
+     * Видалити колонку з дошки
+     * @param column колонка для видалення
+     */
     public void removeColumn(BoardColumn column) {
         columns.remove(column);
         column.setBoard(null);
+        touch();
     }
     
-    public BoardColumn findColumn(String name) {
-        return columns.stream()
-                .filter(column -> column.getName().equals(name))
-                .findFirst()
-                .orElse(null);
+    // ── Додавання / переміщення задач ────────────────────────────────────────
+    public void addIssue(Issue issue, String columnName) {
+        BoardColumn column = findColumn(columnName);
+        if (column != null) {
+            column.addIssue(issue);
+            touch();
+        }
+    }
+    
+    public void moveIssue(Issue issue, String fromColumnName, String toColumnName) {
+        BoardColumn fromColumn = findColumn(fromColumnName);
+        BoardColumn toColumn = findColumn(toColumnName);
+        
+        if (fromColumn != null && toColumn != null) {
+            fromColumn.removeIssue(issue);
+            toColumn.addIssue(issue);
+            touch();
+        }
     }
 } 

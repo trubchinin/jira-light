@@ -1,65 +1,45 @@
 package ua.oip.jiralite.domain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
 import ua.oip.jiralite.domain.enums.Priority;
 import ua.oip.jiralite.domain.enums.Status;
-import ua.oip.jiralite.domain.user.User;
 
-@Entity
-@Table(name = "issues")
+/**
+ * Задача (Issue) на дошці.
+ */
 public class Issue extends BaseEntity {
-    
-    @Column(name = "title", nullable = false)
+
     private String title;
-    
-    @Column(name = "description", length = 4000)
     private String description;
-    
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
     private Status status;
-    
-    @Enumerated(EnumType.STRING)
-    @Column(name = "priority", nullable = false)
     private Priority priority;
-    
-    @Column(name = "story_points")
-    private Integer storyPoints;
-    
-    @ManyToOne
-    @JoinColumn(name = "project_id", nullable = false)
-    private Project project;
-    
-    @ManyToOne
-    @JoinColumn(name = "reporter_id", nullable = false)
     private User reporter;
-    
-    @ManyToOne
-    @JoinColumn(name = "assignee_id")
     private User assignee;
-    
-    @ManyToOne
-    @JoinColumn(name = "board_column_id", nullable = false)
+    private Project project;
     private BoardColumn boardColumn;
-    
-    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> comments = new ArrayList<>();
-    
-    public Issue() {
+    private final List<Comment> comments = new ArrayList<>();
+
+    /**
+     * Конструктор для створення нової задачі
+     */
+    public Issue(String title, String description, User reporter, Project project, Status status, Priority priority) {
+        super();
+        this.title = title;
+        this.description = description;
+        this.reporter = reporter;
+        this.project = project;
+        this.status = status;
+        this.priority = priority;
     }
     
+    /**
+     * Конструктор для тестів
+     */
     public Issue(String title, String description, Status status, Priority priority, Project project, User reporter) {
+        super();
         this.title = title;
         this.description = description;
         this.status = status;
@@ -67,94 +47,87 @@ public class Issue extends BaseEntity {
         this.project = project;
         this.reporter = reporter;
     }
-    
-    public String getTitle() {
-        return title;
-    }
-    
-    public void setTitle(String title) {
-        this.title = title;
-    }
-    
-    public String getDescription() {
-        return description;
-    }
-    
-    public void setDescription(String description) {
-        this.description = description;
-    }
-    
-    public Status getStatus() {
-        return status;
-    }
-    
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-    
-    public Priority getPriority() {
-        return priority;
-    }
-    
-    public void setPriority(Priority priority) {
-        this.priority = priority;
-    }
-    
-    public Integer getStoryPoints() {
-        return storyPoints;
-    }
-    
-    public void setStoryPoints(Integer storyPoints) {
-        this.storyPoints = storyPoints;
-    }
-    
-    public Project getProject() {
-        return project;
-    }
-    
-    public void setProject(Project project) {
-        this.project = project;
-    }
-    
-    public User getReporter() {
-        return reporter;
-    }
-    
-    public void setReporter(User reporter) {
-        this.reporter = reporter;
-    }
-    
-    public User getAssignee() {
-        return assignee;
-    }
-    
-    public void setAssignee(User assignee) {
-        this.assignee = assignee;
-    }
-    
-    public BoardColumn getBoardColumn() {
-        return boardColumn;
-    }
-    
-    public void setBoardColumn(BoardColumn boardColumn) {
-        this.boardColumn = boardColumn;
-    }
-    
-    public List<Comment> getComments() {
-        return comments;
-    }
-    
-    public void setComments(List<Comment> comments) {
-        this.comments = comments;
-    }
-    
+
+    // ── Гетери / сетери ──────────────────────────────────────────────────────
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; touch(); }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; touch(); }
+
+    public Status getStatus() { return status; }
+    public void setStatus(Status status) { this.status = status; touch(); }
+
+    public Priority getPriority() { return priority; }
+    public void setPriority(Priority priority) { this.priority = priority; touch(); }
+
+    public User getReporter() { return reporter; }
+    public void setReporter(User reporter) { this.reporter = reporter; touch(); }
+
+    public User getAssignee() { return assignee; }
+    public void setAssignee(User assignee) { this.assignee = assignee; touch(); }
+
+    public Project getProject() { return project; }
+    public void setProject(Project project) { this.project = project; touch(); }
+
+    public BoardColumn getBoardColumn() { return boardColumn; }
+    public void setBoardColumn(BoardColumn boardColumn) { this.boardColumn = boardColumn; touch(); }
+
+    public List<Comment> getComments() { return Collections.unmodifiableList(comments); }
+
+    /**
+     * Додати коментар до задачі
+     */
     public void addComment(Comment comment) {
         comments.add(comment);
         comment.setIssue(this);
+        touch();
     }
-    
-    public void removeComment(Comment comment) {
-        comments.remove(comment);
-        comment.setIssue(null);
+
+    /**
+     * Видалити коментар з задачі
+     */
+    public boolean removeComment(Comment comment) {
+        boolean removed = comments.remove(comment);
+        if (removed) {
+            comment.setIssue(null);
+            touch();
+        }
+        return removed;
+    }
+
+    /**
+     * Зміна статусу задачі з перевіркою допустимості переходу
+     */
+    public boolean changeStatus(Status newStatus) {
+        // Перевірка допустимих переходів
+        if (status == Status.TO_DO) {
+            if (newStatus == Status.IN_PROGRESS) {
+                status = newStatus;
+                touch();
+                return true;
+            }
+        } else if (status == Status.IN_PROGRESS) {
+            if (newStatus == Status.DONE || newStatus == Status.TO_DO || newStatus == Status.IN_REVIEW) {
+                status = newStatus;
+                touch();
+                return true;
+            }
+        } else if (status == Status.IN_REVIEW) {
+            if (newStatus == Status.IN_PROGRESS || newStatus == Status.DONE) {
+                status = newStatus;
+                touch();
+                return true;
+            }
+        } else if (status == Status.DONE) {
+            if (newStatus == Status.IN_PROGRESS) {
+                status = newStatus;
+                touch();
+                return true;
+            }
+        }
+        
+        // Якщо код досяг цього місця, перехід не допустимий
+        return false;
     }
 } 

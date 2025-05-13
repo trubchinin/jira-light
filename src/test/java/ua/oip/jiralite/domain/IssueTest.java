@@ -1,9 +1,9 @@
 package ua.oip.jiralite.domain;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.assertj.core.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 import ua.oip.jiralite.domain.enums.Priority;
 import ua.oip.jiralite.domain.enums.Status;
 import ua.oip.jiralite.domain.user.Role;
-import ua.oip.jiralite.domain.user.User;
+
+// Используем User из корневого пакета domain
+// import ua.oip.jiralite.domain.user.User;
 
 class IssueTest {
     

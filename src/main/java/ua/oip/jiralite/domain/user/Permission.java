@@ -1,48 +1,39 @@
 package ua.oip.jiralite.domain.user;
 
+/**
+ * Перелік дозволів (прав) у системі.
+ */
 public enum Permission {
-    CREATE_PROJECT("Create Project"),
-    EDIT_PROJECT("Edit Project"),
-    DELETE_PROJECT("Delete Project"),
-    VIEW_PROJECT("View Project"),
+    // Проектні права
+    CREATE_PROJECT,
+    EDIT_PROJECT,
+    DELETE_PROJECT,
+    VIEW_PROJECT,
     
-    CREATE_ISSUE("Create Issue"),
-    EDIT_ISSUE("Edit Issue"),
-    DELETE_ISSUE("Delete Issue"),
-    VIEW_ISSUE("View Issue"),
+    // Права для задач
+    CREATE_ISSUE,
+    EDIT_ISSUE,
+    DELETE_ISSUE,
+    VIEW_ISSUE,
     
-    CREATE_COMMENT("Create Comment"),
-    EDIT_COMMENT("Edit Comment"),
-    DELETE_COMMENT("Delete Comment"),
+    // Права для коментарів
+    CREATE_COMMENT,
+    EDIT_COMMENT,
+    DELETE_COMMENT,
     
-    MANAGE_USERS("Manage Users");
-    
-    private final String displayName;
-    
-    Permission(String displayName) {
-        this.displayName = displayName;
-    }
-    
-    public String getDisplayName() {
-        return displayName;
-    }
+    // Адміністративні права
+    MANAGE_USERS;
     
     /**
-     * Перевіряє, чи дозволена дія з вказаним іменем.
-     * Цей метод перевіряє, чи відповідає назва дії даному дозволу.
+     * Перевіряє, чи дозволена певна дія.
+     * Використовується для тестування.
      *
-     * @param action назва дії для перевірки
-     * @return true, якщо дія дозволена; false - якщо ні
+     * @param action дія, яку потрібно перевірити
+     * @return true, якщо дія дозволена
      */
     public boolean allowed(String action) {
-        // Перевіряємо, чи відповідає дія даному дозволу
-        // По-справжньому це був би більш складний метод,
-        // але для тестування ми використовуємо просту реалізацію
-        return this.name().toLowerCase().contains(action.toLowerCase());
-    }
-    
-    @Override
-    public String toString() {
-        return displayName;
+        // У реальному застосунку тут була б логіка перевірки прав
+        // Для тестів цей метод буде перевизначатись у mock об'єктах
+        return false;
     }
 } 
