@@ -20,6 +20,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,9 @@ import ua.oip.jiralite.ui.listener.IssueCardMouseAdapter;
 import ua.oip.jiralite.ui.panel.BoardColumnPanel;
 import ua.oip.jiralite.ui.panel.ProjectTreePanel;
 import ua.oip.jiralite.ui.panel.ProjectTreePanel.ProjectSelectionListener;
+import ua.oip.jiralite.ui.util.ResponsiveHelper;
 import ua.oip.jiralite.ui.util.SwingHelper;
+import ua.oip.jiralite.ui.util.ThemeManager;
 import ua.oip.jiralite.ui.util.UiConstants;
 
 /**
@@ -45,6 +48,7 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
     
     // Сервіси
     private final BoardService boardService;
+    private final ThemeManager themeManager;
     
     // Ресурси локалізації
     private final ResourceBundle messages;
@@ -78,6 +82,10 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         this.messages = messages;
         this.currentUser = currentUser;
         this.cardDragHandler = new IssueCardMouseAdapter();
+        this.themeManager = ThemeManager.getInstance();
+        
+        // Застосовуємо поточну тему
+        themeManager.applyCurrentTheme();
         
         initializeMainWindow();
         configureListeners();
@@ -87,11 +95,12 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
      * Ініціалізація головного вікна програми
      */
     private void initializeMainWindow() {
-        // Налаштовуємо розмір та заголовок вікна
-        setSize(1200, 800);
-        setMinimumSize(new Dimension(1000, 600));
+        // Налаштовуємо заголовок вікна
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle(messages.getString("app.title"));
+        
+        // Встановлюємо адаптивні розміри в залежності від розміру екрану
+        ResponsiveHelper.setupFrameSize(this);
         
         // Розташовуємо вікно по центру екрану
         setLocationRelativeTo(null);
@@ -133,14 +142,17 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         
         // Зліва розміщуємо дерево проектів
         JScrollPane projectTreeScrollPane = new JScrollPane(projectTreePanel);
-        projectTreeScrollPane.setPreferredSize(new Dimension(200, 600));
+        
+        // Встановлюємо адаптивну ширину для панелі проектів
+        int projectPanelWidth = (int)(200 * themeManager.getCurrentScale().getFactor());
+        projectTreeScrollPane.setPreferredSize(new Dimension(projectPanelWidth, 600));
         
         // Створюємо розділену панель з деревом проектів та дошкою
         JSplitPane splitPane = new JSplitPane(
                 JSplitPane.HORIZONTAL_SPLIT, 
                 projectTreeScrollPane, 
                 mainPanel);
-        splitPane.setDividerLocation(200);
+        splitPane.setDividerLocation(projectPanelWidth);
         splitPane.setOneTouchExpandable(true);
         
         // Додаємо компоненти до головного вікна
@@ -162,10 +174,58 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         // Меню File
         javax.swing.JMenu fileMenu = new javax.swing.JMenu(messages.getString("menu.file"));
         
+        // Пункт Settings
+        javax.swing.JMenuItem settingsItem = new javax.swing.JMenuItem("Налаштування");
+        settingsItem.addActionListener(e -> showSettingsDialog());
+        fileMenu.add(settingsItem);
+        
+        // Додаємо роздільник
+        fileMenu.addSeparator();
+        
         // Пункт Exit
         javax.swing.JMenuItem exitItem = new javax.swing.JMenuItem(messages.getString("menu.exit"));
         exitItem.addActionListener(e -> System.exit(0));
         fileMenu.add(exitItem);
+        
+        // Меню View
+        javax.swing.JMenu viewMenu = new javax.swing.JMenu("Вигляд");
+        
+        // Пункт для перемикання теми
+        javax.swing.JMenuItem toggleThemeItem = new javax.swing.JMenuItem(
+                themeManager.getCurrentTheme() == ThemeManager.Theme.DARK ? 
+                "Світла тема" : "Темна тема");
+        toggleThemeItem.addActionListener(e -> {
+            themeManager.toggleTheme();
+            SwingUtilities.updateComponentTreeUI(this);
+            toggleThemeItem.setText(
+                    themeManager.getCurrentTheme() == ThemeManager.Theme.DARK ? 
+                    "Світла тема" : "Темна тема");
+        });
+        viewMenu.add(toggleThemeItem);
+        
+        // Підменю масштабу
+        javax.swing.JMenu scaleSubmenu = new javax.swing.JMenu("Масштаб");
+        
+        // Додаємо пункти масштабу
+        String[] scaleLabels = {"Малий (80%)", "Середній (100%)", "Великий (120%)", "Дуже великий (150%)"};
+        ThemeManager.UiScale[] scales = {
+            ThemeManager.UiScale.SMALL,
+            ThemeManager.UiScale.MEDIUM,
+            ThemeManager.UiScale.LARGE,
+            ThemeManager.UiScale.EXTRA_LARGE
+        };
+        
+        for (int i = 0; i < scaleLabels.length; i++) {
+            final ThemeManager.UiScale scale = scales[i];
+            javax.swing.JMenuItem scaleItem = new javax.swing.JMenuItem(scaleLabels[i]);
+            scaleItem.addActionListener(e -> {
+                themeManager.setScale(scale);
+                SwingUtilities.updateComponentTreeUI(this);
+            });
+            scaleSubmenu.add(scaleItem);
+        }
+        
+        viewMenu.add(scaleSubmenu);
         
         // Меню Help
         javax.swing.JMenu helpMenu = new javax.swing.JMenu(messages.getString("menu.help"));
@@ -177,6 +237,7 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         
         // Добавляем меню в строку меню
         menuBar.add(fileMenu);
+        menuBar.add(viewMenu);
         menuBar.add(helpMenu);
         
         // Устанавливаем меню для окна
@@ -188,6 +249,14 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
      */
     private void showAboutDialog() {
         AboutDialog dialog = new AboutDialog(this, messages);
+        dialog.setVisible(true);
+    }
+    
+    /**
+     * Показує діалог налаштувань
+     */
+    private void showSettingsDialog() {
+        SettingsDialog dialog = new SettingsDialog(this, messages);
         dialog.setVisible(true);
     }
     
@@ -215,7 +284,7 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         columnsPanel.removeAll();
         columns.clear();
         
-        System.out.println("MainFrame.createBoardColumns: створюємо колонки для дошки " + board.getName());
+        log.debug("Створюємо колонки для дошки {}", board.getName());
         
         // Якщо користувач має права адміністратора, додаємо кнопку створення нової задачі
         if (currentUser.isAdmin()) {
@@ -232,8 +301,14 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         columnsPanel.add(Box.createHorizontalStrut(UiConstants.COMPONENT_SPACING));
         
         // Створюємо колонки для кожного статусу
-        for (Status status : Status.values()) {
-            System.out.println("MainFrame.createBoardColumns: створюємо колонку для статусу " + status);
+        Status[] statuses = Status.values();
+        
+        // Розраховуємо ширину колонки на основі розміру вікна
+        int containerWidth = getWidth() - 250; // враховуємо ширину панелі проектів
+        int columnWidth = ResponsiveHelper.calculateColumnWidth(containerWidth, statuses.length);
+        
+        for (Status status : statuses) {
+            log.debug("Створюємо колонку для статусу {}", status);
             
             BoardColumnPanel column = new BoardColumnPanel(
                     status,
@@ -242,19 +317,25 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
                     boardService
             );
             
+            // Встановлюємо адаптивну ширину колонки
+            column.setPreferredSize(new Dimension(columnWidth, 0));
+            
             // Важливо: явно встановлюємо BoardService для колонки
             column.setBoardService(boardService);
-            System.out.println("MainFrame.createBoardColumns: встановлено BoardService для колонки " + status);
+            log.debug("Встановлено BoardService для колонки {}", status);
             
             columns.put(status, column);
             columnsPanel.add(column);
-            columnsPanel.add(Box.createHorizontalStrut(UiConstants.COMPONENT_SPACING));
+            
+            // Додаємо відступ між колонками
+            if (status.ordinal() < statuses.length - 1) {
+                columnsPanel.add(Box.createHorizontalStrut(UiConstants.COMPONENT_SPACING));
+            }
         }
         
-        // Додаємо "пружину" для розтягування порожнього простору
-        columnsPanel.add(Box.createHorizontalGlue());
+        // Додаємо відступ між останньою колонкою та краєм вікна
+        columnsPanel.add(Box.createHorizontalStrut(UiConstants.COMPONENT_SPACING));
         
-        // Оновлюємо інтерфейс
         columnsPanel.revalidate();
         columnsPanel.repaint();
     }

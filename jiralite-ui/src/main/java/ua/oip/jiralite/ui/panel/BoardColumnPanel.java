@@ -37,6 +37,7 @@ import ua.oip.jiralite.ui.listener.IssueCardMouseAdapter;
 import ua.oip.jiralite.ui.model.IssueCardModel;
 import ua.oip.jiralite.ui.util.SwingHelper;
 import ua.oip.jiralite.ui.util.UiConstants;
+import ua.oip.jiralite.ui.util.ThemeManager;
 
 /**
  * Панель для отображения одной колонки Kanban-доски.
@@ -52,6 +53,7 @@ public class BoardColumnPanel extends JPanel {
     
     private BoardService boardService;
     private AuthService authService;
+    private ThemeManager themeManager;
     
     /**
      * Конструктор панели колонки
@@ -62,8 +64,10 @@ public class BoardColumnPanel extends JPanel {
     public BoardColumnPanel(Status status, ResourceBundle messages) {
         this.status = status;
         this.messages = messages;
+        this.themeManager = ThemeManager.getInstance();
         
         initializeUI();
+        addThemeChangeListener();
     }
     
     /**
@@ -79,13 +83,65 @@ public class BoardColumnPanel extends JPanel {
         this.messages = messages;
         this.boardService = boardService;
         this.authService = AuthService.getInstance();
+        this.themeManager = ThemeManager.getInstance();
         
         System.out.println("BoardColumnPanel: конструктор з boardService для колонки " + status);
         
         initializeUI();
+        addThemeChangeListener();
         
         // Регистрируем обработчик перетаскивания для этой колонки
         new ColumnDropTarget(this, status, boardService, messages);
+    }
+    
+    /**
+     * Добавляет слушателя изменения темы
+     */
+    private void addThemeChangeListener() {
+        themeManager.addThemeChangeListener(new ThemeManager.ThemeChangeListener() {
+            @Override
+            public void onThemeChanged() {
+                updateTheme();
+            }
+        });
+    }
+    
+    /**
+     * Обновляет цвета компонентов в соответствии с текущей темой
+     */
+    private void updateTheme() {
+        // Обновляем цвет фона панели карточек
+        cardsPanel.setBackground(getColumnColor());
+        
+        // Обновляем рамку колонки
+        setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(themeManager.getCurrentScheme().textSecondary, 1, true),
+                getColumnTitle(status),
+                TitledBorder.CENTER, 
+                TitledBorder.TOP,
+                UiConstants.SUBHEADER_FONT,
+                themeManager.getCurrentScheme().textPrimary));
+        
+        // Перерисовываем панель
+        revalidate();
+        repaint();
+    }
+    
+    /**
+     * Возвращает цвет фона колонки в зависимости от статуса и текущей темы
+     */
+    private Color getColumnColor() {
+        // Используем цвета из текущей цветовой схемы
+        switch (status) {
+            case TO_DO:
+                return themeManager.getCurrentScheme().todoColumn;
+            case IN_PROGRESS:
+                return themeManager.getCurrentScheme().inProgressColumn;
+            case DONE:
+                return themeManager.getCurrentScheme().doneColumn;
+            default:
+                return themeManager.getCurrentScheme().background;
+        }
     }
     
     /**
@@ -100,17 +156,17 @@ public class BoardColumnPanel extends JPanel {
         
         // Встановлюємо граничну рамку з заголовком
         setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(UiConstants.TEXT_SECONDARY, 1, true),
+                BorderFactory.createLineBorder(themeManager.getCurrentScheme().textSecondary, 1, true),
                 title,
                 TitledBorder.CENTER, 
                 TitledBorder.TOP,
                 UiConstants.SUBHEADER_FONT,
-                UiConstants.TEXT_PRIMARY));
+                themeManager.getCurrentScheme().textPrimary));
         
         // Створюємо панель для карток з вертикальним розташуванням
         cardsPanel = new JPanel();
         cardsPanel.setLayout(new BoxLayout(cardsPanel, BoxLayout.Y_AXIS));
-        cardsPanel.setBackground(Color.WHITE);
+        cardsPanel.setBackground(getColumnColor());
         cardsPanel.setOpaque(true);
         
         // Додаємо прокрутку для панелі з картками
@@ -297,10 +353,7 @@ public class BoardColumnPanel extends JPanel {
         
         cards.put(issue.getId(), card);
         
-        // Встановлюємо переваги розмірів для карток
-        card.setMinimumSize(new Dimension(200, 80));
-        card.setPreferredSize(new Dimension(200, 80));
-        card.setMaximumSize(new Dimension(200, 80));
+        // Не устанавливаем жёсткие размеры, позволяем карточке самой определять свой размер
         
         // Оновлюємо відображення
         cardsPanel.revalidate();
@@ -575,10 +628,7 @@ public class BoardColumnPanel extends JPanel {
         new DropTarget(card, DnDConstants.ACTION_MOVE, 
                 new ColumnDropTarget(this, status, boardService, messages));
         
-        // Устанавливаем размеры карточки
-        card.setMinimumSize(new Dimension(200, 80));
-        card.setPreferredSize(new Dimension(200, 80));
-        card.setMaximumSize(new Dimension(200, 80));
+        // Не устанавливаем жёсткие размеры, позволяем карточке самой определять свой размер
         
         // Добавляем карточку в начало панели (после первого компонента, если он есть)
         if (cardsPanel.getComponentCount() > 0) {

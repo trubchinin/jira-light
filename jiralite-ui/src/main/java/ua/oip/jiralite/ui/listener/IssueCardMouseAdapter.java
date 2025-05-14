@@ -33,6 +33,9 @@ public class IssueCardMouseAdapter extends MouseAdapter implements DragGestureLi
     private IssueCardPanel draggedCard;
     private boolean isDragging = false;
     
+    // Минимальное расстояние для определения начала перетаскивания
+    private static final int DRAG_THRESHOLD = 5;
+    
     // Сохраняем информацию о исходной колонке и позиции для возможности отката
     private Container originalParent;
     private int originalIndex;
@@ -50,6 +53,10 @@ public class IssueCardMouseAdapter extends MouseAdapter implements DragGestureLi
     @Override
     public void mousePressed(MouseEvent e) {
         System.out.println("IssueCardMouseAdapter: натиснуто мишу на компоненті");
+        
+        // Сразу отменяем события для текстовых компонентов, чтобы они не перехватывали перетаскивание
+        e.getComponent().requestFocusInWindow();
+        e.consume();
         
         Component component = e.getComponent();
         
@@ -249,5 +256,19 @@ public class IssueCardMouseAdapter extends MouseAdapter implements DragGestureLi
         card.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
         
         System.out.println("IssueCardMouseAdapter: підтримку перетягування додано");
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        if (draggedCard != null) {
+            // Отменяем стандартное поведение выделения текста
+            e.consume();
+            
+            if (!isDragging && (Math.abs(e.getX()) + Math.abs(e.getY()) > DRAG_THRESHOLD)) {
+                System.out.println("IssueCardMouseAdapter: начинаем перетаскивание");
+                // Запускаем перетаскивание через DragSource, если оно еще не активно
+                // Реальная логика перетаскивания уже реализована в DragGestureListener
+            }
+        }
     }
 } 
