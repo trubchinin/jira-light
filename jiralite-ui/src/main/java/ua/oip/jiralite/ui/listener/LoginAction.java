@@ -108,7 +108,10 @@ public class LoginAction implements ActionListener {
                         
                         // Створюємо та відображаємо головне вікно
                         SwingUtilities.invokeLater(() -> {
-                            MainFrame mainFrame = new MainFrame(user, authService, messages);
+                            // Отримуємо екземпляр BoardService
+                            ua.oip.jiralite.service.BoardService boardService = ua.oip.jiralite.service.BoardService.getInstance();
+                            // Створюємо головне вікно з правильними параметрами
+                            MainFrame mainFrame = new MainFrame(boardService, messages, user);
                             mainFrame.setVisible(true);
                         });
                     } else {

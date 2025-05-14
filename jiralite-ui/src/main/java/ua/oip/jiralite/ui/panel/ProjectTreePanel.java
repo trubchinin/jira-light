@@ -1,46 +1,45 @@
 package ua.oip.jiralite.ui.panel;
 
-import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.util.List;
+import java.util.ResourceBundle;
+
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.util.List;
-import java.util.ResourceBundle;
 
 import ua.oip.jiralite.domain.Board;
 import ua.oip.jiralite.domain.Project;
 import ua.oip.jiralite.domain.User;
 import ua.oip.jiralite.service.BoardService;
-import ua.oip.jiralite.ui.util.SwingHelper;
 import ua.oip.jiralite.ui.util.UiConstants;
 
 /**
  * Панель відображення деревовидної структури проєктів та дошок.
  * Ліва частина JSplitPane в головному вікні.
  */
-public class ProjectTreePanel extends JPanel {
-    
-    private final User currentUser;
-    private final BoardService boardService;
-    private final ResourceBundle messages;
-    
-    private JTree projectTree;
-    private DefaultTreeModel treeModel;
-    private DefaultMutableTreeNode rootNode;
-    
-    private ProjectSelectionListener selectionListener;
+public final class ProjectTreePanel extends JPanel {
     
     /**
-     * Інтерфейс для слухача вибору проекту або дошки
+     * Интерфейс для обработки событий выбора проекта и доски
      */
     public interface ProjectSelectionListener {
         void onProjectSelected(Project project);
         void onBoardSelected(Board board);
     }
+    
+    private final User currentUser;
+    private final BoardService boardService;
+    private final ResourceBundle messages;
+    
+    private ProjectSelectionListener selectionListener;
+    private final JTree tree;
     
     /**
      * Конструктор панелі дерева проєктів
@@ -54,64 +53,45 @@ public class ProjectTreePanel extends JPanel {
         this.boardService = boardService;
         this.messages = messages;
         
-        initializeUI();
-    }
-    
-    /**
-     * Ініціалізація компонентів інтерфейсу
-     */
-    private void initializeUI() {
         setLayout(new BorderLayout());
-        setBorder(BorderFactory.createEmptyBorder(UiConstants.PANEL_PADDING, 
-                UiConstants.PANEL_PADDING, UiConstants.PANEL_PADDING, UiConstants.PANEL_PADDING));
+        setBorder(BorderFactory.createTitledBorder("Проекти"));
         
-        // Заголовок панелі
-        JLabel titleLabel = new JLabel(messages.getString("project.title"));
-        titleLabel.setFont(UiConstants.HEADER_FONT);
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, UiConstants.COMPONENT_SPACING, 0));
+        // Ініціалізуємо дерево
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Проекти");
+        tree = new JTree(new DefaultTreeModel(root));
+        tree.setRootVisible(false);
+        tree.setShowsRootHandles(true);
         
-        // Створення кореневого вузла та моделі дерева
-        rootNode = new DefaultMutableTreeNode("Projects");
-        treeModel = new DefaultTreeModel(rootNode);
-        
-        // Створення дерева проєктів
-        projectTree = new JTree(treeModel);
-        projectTree.setRootVisible(false);
-        projectTree.setShowsRootHandles(true);
-        projectTree.setCellRenderer(new ProjectTreeCellRenderer());
-        
-        // Додавання прослуховувача подій вибору у дереві
-        projectTree.addTreeSelectionListener(new TreeSelectionListener() {
-            @Override
-            public void valueChanged(TreeSelectionEvent e) {
-                handleTreeSelection();
+        // Додаємо загальний обробник вибору вузла в дереві
+        tree.addTreeSelectionListener(e -> {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) 
+                    tree.getLastSelectedPathComponent();
+            
+            if (node != null && selectionListener != null) {
+                Object userObject = node.getUserObject();
+                
+                if (userObject instanceof Project) {
+                    System.out.println("ProjectTreePanel: проект вибрано: " + ((Project) userObject).getName());
+                    selectionListener.onProjectSelected((Project) userObject);
+                } else if (userObject instanceof Board) {
+                    Board board = (Board) userObject;
+                    System.out.println("ProjectTreePanel: дошку вибрано: " + board + ", Name: " + board.getName());
+                    selectionListener.onBoardSelected(board);
+                }
             }
         });
         
-        // Створення скрол-панелі для дерева
-        JScrollPane scrollPane = new JScrollPane(projectTree);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        add(new JScrollPane(tree), BorderLayout.CENTER);
         
-        // Панель з кнопками для створення проєктів та дошок
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
-        
-        JButton newProjectButton = SwingHelper.createButton(
-                messages.getString("project.create"), 
-                UiConstants.ICON_PROJECT);
-        
-        newProjectButton.addActionListener(e -> handleCreateProject());
-        
-        buttonPanel.add(newProjectButton);
-        buttonPanel.add(Box.createHorizontalGlue());
-        
-        // Додавання всіх компонентів на панель
-        add(titleLabel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
-        
-        // Завантаження проєктів
+        // Завантажуємо проекти та дошки
         loadProjects();
+    }
+    
+    /**
+     * Установка обработчика выбора проекта/доски
+     */
+    public void setSelectionListener(ProjectSelectionListener listener) {
+        this.selectionListener = listener;
     }
     
     /**
@@ -119,66 +99,33 @@ public class ProjectTreePanel extends JPanel {
      */
     public void loadProjects() {
         // Очистка дерева
-        rootNode.removeAllChildren();
+        tree.setModel(null);
         
         // Отримання проєктів користувача та додавання їх у дерево
         List<Project> projects = boardService.getProjectsByUser(currentUser);
         
+        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Projects");
         for (Project project : projects) {
             DefaultMutableTreeNode projectNode = new DefaultMutableTreeNode(project);
             rootNode.add(projectNode);
             
+            System.out.println("Додаємо проект: " + project.getName() + " (ID: " + project.getId() + ")");
+            
             // Додавання дошок проєкту
             List<Board> boards = boardService.getBoardsByProject(project);
+            System.out.println("Отримали " + boards.size() + " дошок для проекту " + project.getName());
+            
             for (Board board : boards) {
+                System.out.println("ProjectTreePanel: додаємо дошку: " + board + " (ID: " + board.getId() + ")");
                 DefaultMutableTreeNode boardNode = new DefaultMutableTreeNode(board);
                 projectNode.add(boardNode);
             }
         }
         
-        // Оновлення моделі та розгортання всіх вузлів
-        treeModel.reload();
-        for (int i = 0; i < projectTree.getRowCount(); i++) {
-            projectTree.expandRow(i);
+        tree.setModel(new DefaultTreeModel(rootNode));
+        for (int i = 0; i < tree.getRowCount(); i++) {
+            tree.expandRow(i);
         }
-    }
-    
-    /**
-     * Обробка вибору у дереві
-     */
-    private void handleTreeSelection() {
-        if (selectionListener == null) {
-            return;
-        }
-        
-        TreePath path = projectTree.getSelectionPath();
-        if (path == null) {
-            return;
-        }
-        
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
-        Object userObject = node.getUserObject();
-        
-        if (userObject instanceof Project) {
-            selectionListener.onProjectSelected((Project) userObject);
-        } else if (userObject instanceof Board) {
-            selectionListener.onBoardSelected((Board) userObject);
-        }
-    }
-    
-    /**
-     * Обробка створення нового проєкту
-     */
-    private void handleCreateProject() {
-        // Тут буде логіка створення нового проєкту
-        // В реальній реалізації тут буде відкриття діалогу для введення даних проєкту
-    }
-    
-    /**
-     * Встановлення слухача вибору проєкту/дошки
-     */
-    public void setSelectionListener(ProjectSelectionListener listener) {
-        this.selectionListener = listener;
     }
     
     /**

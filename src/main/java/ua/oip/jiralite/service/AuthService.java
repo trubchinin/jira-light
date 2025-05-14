@@ -1,80 +1,201 @@
 package ua.oip.jiralite.service;
 
 import java.util.Optional;
+import java.time.LocalDateTime;
 
-import ua.oip.jiralite.domain.user.Role;
-import ua.oip.jiralite.domain.user.User;
+import ua.oip.jiralite.domain.User;
+import ua.oip.jiralite.domain.enums.Role;
+import ua.oip.jiralite.domain.user.Permission;
+import ua.oip.jiralite.domain.user.RoleManager;
 import ua.oip.jiralite.repository.UserRepository;
 
+/**
+ * Сервис аутентификации пользователей
+ */
 public class AuthService {
     
+    private static AuthService instance;
     private final UserRepository userRepository;
     private User currentUser;
     
+    /**
+     * Возвращает Singleton экземпляр сервиса
+     */
+    public static AuthService getInstance() {
+        if (instance == null) {
+            instance = new AuthService();
+        }
+        return instance;
+    }
+    
+    /**
+     * Конструктор для внедрения зависимостей
+     */
     public AuthService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
     
-    public boolean login(String username, String password) {
-        Optional<User> userOpt = userRepository.findByUsername(username);
+    /**
+     * Конструктор для Singleton
+     */
+    private AuthService() {
+        this.userRepository = null; // В реальном приложении здесь была бы инициализация репозитория
+    }
+    
+    /**
+     * Аутентификация пользователя
+     * 
+     * @param login логин
+     * @param password пароль
+     * @return аутентифицированный пользователь
+     * @throws AuthException если аутентификация не удалась
+     */
+    public User signIn(String login, String password) throws AuthException {
+        if (login == null || login.trim().isEmpty()) {
+            throw new AuthException("Логін не може бути порожнім");
+        }
         
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
+        if (password == null || password.trim().isEmpty()) {
+            throw new AuthException("Пароль не може бути порожнім");
+        }
+        
+        // Для тестового режима без репозитория
+        if (userRepository == null) {
+            // Администратор
+            if ("admin".equals(login) && "qwerty".equals(password)) {
+                User admin = new User(login, password, "Administrator", "admin@example.com");
+                admin.setId(1L);
+                admin.setRole(Role.ADMIN);
+                currentUser = admin;
+                return admin;
+            }
             
-            if (user.getPassword().equals(password)) { // В реальном приложении нужно использовать хеширование паролей
+            // Зарегистрированный пользователь
+            if ("john".equals(login) && "1234".equals(password)) {
+                User user = new User(login, password, "John Developer", "john@example.com");
+                user.setId(2L);
+                user.setRole(Role.USER);
                 currentUser = user;
-                return true;
+                return user;
+            }
+            
+            // Гость с ограниченным доступом
+            if ("guest".equals(login) && "guest".equals(password)) {
+                User guest = new User(login, password, "Guest User", "guest@example.com");
+                guest.setId(3L);
+                guest.setRole(Role.GUEST);
+                currentUser = guest;
+                return guest;
+            }
+            
+            // Ошибка аутентификации
+            throw new AuthException("Невірний логін або пароль");
+        }
+        
+        // Для реального репозитория
+        if (userRepository != null) {
+            User user = userRepository.findByLogin(login);
+            
+            if (user != null && password.equals(user.getPassword())) {
+                // Обновляем время последнего входа
+                user.setLastLogin(LocalDateTime.now());
+                userRepository.save(user);
+                
+                // Устанавливаем текущего пользователя
+                currentUser = user;
+                return user;
             }
         }
         
-        return false;
+        throw new AuthException("Невірний логін або пароль");
     }
     
-    public void logout() {
-        currentUser = null;
+    /**
+     * Метод authenticate для совместимости с LoginAction
+     * 
+     * @param username имя пользователя
+     * @param password пароль
+     * @return пользователь или null, если аутентификация не удалась
+     */
+    public User authenticate(String username, String password) {
+        try {
+            return signIn(username, password);
+        } catch (AuthException e) {
+            return null;
+        }
     }
     
+    /**
+     * Возвращает текущего пользователя
+     */
     public User getCurrentUser() {
         return currentUser;
     }
     
-    public boolean isLoggedIn() {
-        return currentUser != null;
+    /**
+     * Определяет роль текущего пользователя
+     */
+    public Role getUserRole() {
+        if (currentUser == null) {
+            return null;
+        }
+        
+        return currentUser.getRole();
     }
     
-    public User registerUser(String username, String password, String email, String fullName, Role role) {
-        if (userRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException("Username '" + username + "' is already taken");
-        }
-        
-        if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email '" + email + "' is already registered");
-        }
-        
-        User user = new User(username, password, email, fullName);
-        user.setRole(role);
-        
-        return userRepository.save(user);
+    /**
+     * Выход пользователя из системы
+     */
+    public void logout() {
+        currentUser = null;
     }
     
-    public User updateUser(User user) {
-        if (!userRepository.existsById(user.getId())) {
-            throw new IllegalArgumentException("User with ID " + user.getId() + " not found");
+    /**
+     * Проверяет, имеет ли текущий пользователь права на изменение задачи
+     */
+    public boolean canEditIssue() {
+        if (currentUser == null) {
+            return false;
         }
-        
-        // Проверка на уникальность username и email, исключая текущего пользователя
-        userRepository.findByUsername(user.getUsername())
-            .filter(u -> !u.getId().equals(user.getId()))
-            .ifPresent(u -> {
-                throw new IllegalArgumentException("Username '" + user.getUsername() + "' is already taken");
-            });
-        
-        userRepository.findByEmail(user.getEmail())
-            .filter(u -> !u.getId().equals(user.getId()))
-            .ifPresent(u -> {
-                throw new IllegalArgumentException("Email '" + user.getEmail() + "' is already registered");
-            });
-        
-        return userRepository.save(user);
+        return currentUser.hasPermission(Permission.EDIT_ISSUE);
+    }
+    
+    /**
+     * Проверяет, имеет ли текущий пользователь права на добавление новых задач
+     */
+    public boolean canCreateIssue() {
+        if (currentUser == null) {
+            return false;
+        }
+        return currentUser.hasPermission(Permission.CREATE_ISSUE);
+    }
+    
+    /**
+     * Проверяет, имеет ли текущий пользователь права на просмотр задач
+     */
+    public boolean canViewIssue() {
+        if (currentUser == null) {
+            return false;
+        }
+        return currentUser.hasPermission(Permission.VIEW_ISSUE);
+    }
+    
+    /**
+     * Проверяет, имеет ли текущий пользователь права на удаление задач
+     */
+    public boolean canDeleteIssue() {
+        if (currentUser == null) {
+            return false;
+        }
+        return currentUser.hasPermission(Permission.DELETE_ISSUE);
+    }
+    
+    /**
+     * Исключение при ошибке аутентификации
+     */
+    public static class AuthException extends Exception {
+        public AuthException(String message) {
+            super(message);
+        }
     }
 } 

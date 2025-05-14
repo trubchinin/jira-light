@@ -10,7 +10,7 @@ import ua.oip.jiralite.domain.Issue;
 import ua.oip.jiralite.domain.Project;
 import ua.oip.jiralite.domain.enums.Status;
 import ua.oip.jiralite.domain.user.Permission;
-import ua.oip.jiralite.domain.user.User;
+import ua.oip.jiralite.domain.User;
 import ua.oip.jiralite.repository.IssueRepository;
 import ua.oip.jiralite.repository.ProjectRepository;
 

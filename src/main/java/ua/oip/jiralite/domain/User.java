@@ -6,7 +6,8 @@ import java.util.Arrays;
 import java.util.Base64;
 
 import ua.oip.jiralite.domain.user.Permission;
-import ua.oip.jiralite.domain.user.Role;
+import ua.oip.jiralite.domain.user.RoleManager;
+import ua.oip.jiralite.domain.enums.Role;
 
 /**
  * Модель користувача системи.
@@ -16,7 +17,7 @@ public class User extends BaseEntity {
     private String username;
     private String email;
     private String fullName;
-    private Role   role;
+    private Role role;
     private String passwordHash;
 
     /**
@@ -25,8 +26,8 @@ public class User extends BaseEntity {
     public User(String username, String email, Role role) {
         super();
         this.username = username;
-        this.email    = email;
-        this.role     = role;
+        this.email = email;
+        this.role = role;
     }
     
     /**
@@ -94,8 +95,39 @@ public class User extends BaseEntity {
         }
     }
 
-    /** Перевірити, чи має користувач певний дозвіл. */
-    public boolean can(Permission p)       { 
-        return role != null && role.has(p); 
+    /** 
+     * Перевірити, чи має користувач певний дозвіл. 
+     * Використовує RoleManager для перевірки прав.
+     */
+    public boolean hasPermission(Permission permission) { 
+        return role != null && RoleManager.hasPermission(role.name(), permission);
+    }
+    
+    /**
+     * Перевіряє, чи доступна певна дія для користувача
+     */
+    public boolean isActionAllowed(String action) {
+        return role != null && RoleManager.isActionAllowed(role.name(), action);
+    }
+    
+    /**
+     * Перевіряє, чи є користувач адміністратором
+     */
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
+    }
+    
+    /**
+     * Перевіряє, чи є користувач звичайним користувачем
+     */
+    public boolean isUser() {
+        return role == Role.USER;
+    }
+    
+    /**
+     * Перевіряє, чи є користувач гостем
+     */
+    public boolean isGuest() {
+        return role == Role.GUEST;
     }
 } 

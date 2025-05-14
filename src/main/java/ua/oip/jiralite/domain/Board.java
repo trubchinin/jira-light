@@ -9,6 +9,8 @@ import java.util.List;
  */
 public class Board extends BaseEntity {
 
+    private String name;
+    private String description;
     private final List<BoardColumn> columns = new ArrayList<>();
     private Project project;
     
@@ -16,14 +18,20 @@ public class Board extends BaseEntity {
      * Створює нову дошку зі стандартними колонками
      */
     public Board() {
-        // Створюємо стандартні колонки
-        columns.add(new BoardColumn("To Do", 1));
-        columns.add(new BoardColumn("In Progress", 2));
-        columns.add(new BoardColumn("Done", 3));
+        super();
+    }
+    
+    /**
+     * Створює нову дошку з назвою та описом
+     */
+    public Board(String name, String description) {
+        super();
+        this.name = name;
+        this.description = description;
     }
     
     public Board(Project project) {
-        this();
+        super();
         this.project = project;
     }
 
@@ -38,6 +46,25 @@ public class Board extends BaseEntity {
     
     public void setProject(Project project) {
         this.project = project;
+        touch();
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+        touch();
+    }
+    
+    public String getDescription() {
+        return description;
+    }
+    
+    public void setDescription(String description) {
+        this.description = description;
+        touch();
     }
     
     /**
