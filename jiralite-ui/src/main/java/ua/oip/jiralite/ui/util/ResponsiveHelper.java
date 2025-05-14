@@ -134,6 +134,10 @@ public class ResponsiveHelper {
         int maxColumnWidth = (int)(400 * scale);
         columnWidth = Math.min(columnWidth, maxColumnWidth);
         
+        // Встановлюємо абсолютний мінімум ширини колонки для підтримки кнопок та інтерфейсу
+        int absoluteMinWidth = 180;
+        columnWidth = Math.max(columnWidth, absoluteMinWidth);
+        
         log.debug("Розрахована ширина колонки: {} для контейнера шириною {} з {} колонками", 
                 columnWidth, containerWidth, columnCount);
         

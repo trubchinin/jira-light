@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.HashMap;
@@ -26,14 +28,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ua.oip.jiralite.domain.Board;
+import ua.oip.jiralite.domain.Issue;
 import ua.oip.jiralite.domain.Project;
 import ua.oip.jiralite.domain.User;
 import ua.oip.jiralite.domain.enums.Status;
+import ua.oip.jiralite.service.AuthService;
 import ua.oip.jiralite.service.BoardService;
 import ua.oip.jiralite.ui.listener.IssueCardMouseAdapter;
 import ua.oip.jiralite.ui.panel.BoardColumnPanel;
+import ua.oip.jiralite.ui.panel.NotificationPanel;
 import ua.oip.jiralite.ui.panel.ProjectTreePanel;
 import ua.oip.jiralite.ui.panel.ProjectTreePanel.ProjectSelectionListener;
+import ua.oip.jiralite.ui.panel.SearchPanel;
+import ua.oip.jiralite.ui.panel.SearchResultPanel;
 import ua.oip.jiralite.ui.util.ResponsiveHelper;
 import ua.oip.jiralite.ui.util.SwingHelper;
 import ua.oip.jiralite.ui.util.ThemeManager;
@@ -70,6 +77,12 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
     // Колонки дошки (статус -> панель)
     private final Map<Status, BoardColumnPanel> columns = new HashMap<>();
     
+    // Новые компоненты
+    private SearchPanel searchPanel;
+    private SearchResultPanel searchResultPanel;
+    private NotificationPanel notificationPanel;
+    private JPanel sidePanel;
+    
     /**
      * Конструктор головного вікна
      * 
@@ -95,80 +108,155 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
      * Ініціалізація головного вікна програми
      */
     private void initializeMainWindow() {
-        // Налаштовуємо заголовок вікна
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setTitle(messages.getString("app.title"));
-        
-        // Встановлюємо адаптивні розміри в залежності від розміру екрану
-        ResponsiveHelper.setupFrameSize(this);
-        
-        // Розташовуємо вікно по центру екрану
-        setLocationRelativeTo(null);
-        
-        // Створюємо загальну структуру вікна:
-        // 1. Верхня панель з заголовком
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        
-        // Заголовок дошки
-        boardTitleLabel = new JLabel("");
-        boardTitleLabel.setFont(UiConstants.HEADER_FONT);
-        boardTitleLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        headerPanel.add(boardTitleLabel, BorderLayout.CENTER);
-        
-        // 2. Ліва панель з деревом проектів
-        projectTreePanel = new ProjectTreePanel(currentUser, boardService, messages);
-        projectTreePanel.setSelectionListener(this);
-        
-        // 3. Головна панель з колонками дошки
-        mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        // Створюємо панель для колонок з горизонтальним box layout
-        columnsPanel = new JPanel();
-        columnsPanel.setLayout(new BoxLayout(columnsPanel, BoxLayout.X_AXIS));
-        
-        // Додаємо скроллінг для колонок
-        JScrollPane columnsScrollPane = new JScrollPane(columnsPanel);
-        columnsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-        columnsScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        columnsScrollPane.setBorder(BorderFactory.createEmptyBorder());
-        
-        // Панель для дошки
-        boardPanel = new JPanel(new BorderLayout());
-        boardPanel.add(columnsScrollPane, BorderLayout.CENTER);
-        
-        // Додаємо панель дошки до головної панелі
-        mainPanel.add(boardPanel, BorderLayout.CENTER);
-        
-        // Зліва розміщуємо дерево проектів
-        JScrollPane projectTreeScrollPane = new JScrollPane(projectTreePanel);
-        
-        // Встановлюємо адаптивну ширину для панелі проектів
-        int projectPanelWidth = (int)(200 * themeManager.getCurrentScale().getFactor());
-        projectTreeScrollPane.setPreferredSize(new Dimension(projectPanelWidth, 600));
-        
-        // Створюємо розділену панель з деревом проектів та дошкою
-        JSplitPane splitPane = new JSplitPane(
-                JSplitPane.HORIZONTAL_SPLIT, 
-                projectTreeScrollPane, 
-                mainPanel);
-        splitPane.setDividerLocation(projectPanelWidth);
-        splitPane.setOneTouchExpandable(true);
-        
-        // Додаємо компоненти до головного вікна
-        getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(headerPanel, BorderLayout.NORTH);
-        getContentPane().add(splitPane, BorderLayout.CENTER);
-        
-        // Создаем главное меню
-        createMainMenu();
+        try {
+            System.out.println("### Початок ініціалізації головного вікна ###");
+            
+            // Базові налаштування вікна
+            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            setTitle(messages.getString("app.title") + " - " + currentUser.getFullName() + " (" + currentUser.getRole() + ")");
+            ResponsiveHelper.setupFrameSize(this);
+            setLocationRelativeTo(null);
+            
+            System.out.println("Базові налаштування вікна виконано");
+            
+            // Створюємо головну панель, що міститиме всі інші компоненти
+            JPanel contentPanel = new JPanel(new BorderLayout());
+            contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            
+            // Верхня панель з заголовком
+            JPanel headerPanel = new JPanel(new BorderLayout());
+            boardTitleLabel = new JLabel("Jira Light - оберіть дошку");
+            boardTitleLabel.setFont(UiConstants.HEADER_FONT);
+            boardTitleLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            headerPanel.add(boardTitleLabel, BorderLayout.CENTER);
+            
+            // Информация о текущем пользователе
+            JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JLabel userLabel = new JLabel("Користувач: " + currentUser.getFullName() + " (" + currentUser.getRole() + ")");
+            userLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            JButton logoutButton = new JButton("Вийти");
+            logoutButton.addActionListener(e -> logout());
+            userInfoPanel.add(userLabel);
+            userInfoPanel.add(logoutButton);
+            headerPanel.add(userInfoPanel, BorderLayout.EAST);
+            
+            contentPanel.add(headerPanel, BorderLayout.NORTH);
+            
+            System.out.println("Заголовок створено");
+            
+            try {
+                // Основні розміри для компонентів
+                int sideBarWidth = 250;
+                
+                // Панель для дошки (права частина)
+                mainPanel = new JPanel(new BorderLayout());
+                mainPanel.setBorder(BorderFactory.createTitledBorder("Дошка"));
+                
+                // Панель колонок
+                columnsPanel = new JPanel();
+                columnsPanel.setLayout(new BoxLayout(columnsPanel, BoxLayout.X_AXIS));
+                JScrollPane columnsScrollPane = new JScrollPane(columnsPanel);
+                
+                // Створюємо базову панель дошки
+                boardPanel = new JPanel(new BorderLayout());
+                boardPanel.add(columnsScrollPane, BorderLayout.CENTER);
+                mainPanel.add(boardPanel, BorderLayout.CENTER);
+                
+                // Створюємо ліву панель з вертикальним BoxLayout
+                JPanel leftPanel = new JPanel();
+                leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+                leftPanel.setBorder(BorderFactory.createTitledBorder("Навігація"));
+                
+                // Ініціалізуємо дерево проектів
+                System.out.println("Ініціалізація дерева проектів...");
+                projectTreePanel = new ProjectTreePanel(currentUser, boardService, messages);
+                projectTreePanel.setSelectionListener(this);
+                
+                // Додаємо дерево проектів в окремий контейнер
+                JPanel projectsContainer = new JPanel(new BorderLayout());
+                projectsContainer.setBorder(BorderFactory.createTitledBorder("Проекти"));
+                projectsContainer.add(projectTreePanel, BorderLayout.CENTER);
+                projectsContainer.setMinimumSize(new Dimension(sideBarWidth, 100));
+                projectsContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+                
+                // Ініціалізуємо панель пошуку
+                System.out.println("Ініціалізація компонентів пошуку...");
+                searchPanel = new SearchPanel(messages, boardService);
+                searchPanel.setBorder(BorderFactory.createTitledBorder("Пошук"));
+                searchPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                
+                // Ініціалізуємо панель результатів пошуку
+                searchResultPanel = new SearchResultPanel(messages);
+                searchResultPanel.setBorder(BorderFactory.createTitledBorder("Результати"));
+                searchResultPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                
+                // Зв'язуємо пошук і результати
+                searchPanel.setSearchResultHandler(issues -> {
+                    searchResultPanel.displayResults(issues);
+                });
+                
+                // Обробник вибору задачі в результатах
+                searchResultPanel.setOnIssueSelectedHandler(issue -> {
+                    openIssueDialog(issue);
+                });
+                
+                // Ініціалізуємо панель сповіщень
+                notificationPanel = new NotificationPanel(messages);
+                notificationPanel.setBorder(BorderFactory.createTitledBorder("Повідомлення"));
+                notificationPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                
+                // Додаємо компоненти у ліву панель
+                leftPanel.add(projectsContainer);
+                leftPanel.add(Box.createVerticalStrut(10));
+                leftPanel.add(searchPanel);
+                leftPanel.add(Box.createVerticalStrut(10));
+                leftPanel.add(searchResultPanel);
+                leftPanel.add(Box.createVerticalStrut(10));
+                leftPanel.add(notificationPanel);
+                
+                // Створюємо скрол для лівої панелі
+                JScrollPane leftScrollPane = new JScrollPane(leftPanel);
+                leftScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+                leftScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                
+                // Створюємо розділову панель
+                JSplitPane splitPane = new JSplitPane(
+                        JSplitPane.HORIZONTAL_SPLIT,
+                        leftScrollPane,
+                        mainPanel);
+                splitPane.setDividerLocation(sideBarWidth + 20);
+                
+                contentPanel.add(splitPane, BorderLayout.CENTER);
+                
+                System.out.println("Компоненти UI створено успішно");
+            } catch (Exception e) {
+                System.err.println("ПОМИЛКА при створенні UI компонентів: " + e.getMessage());
+                e.printStackTrace();
+                
+                // Аварійне створення простого інтерфейсу
+                JPanel emergencyPanel = new JPanel(new BorderLayout());
+                emergencyPanel.add(new JLabel("Помилка ініціалізації: " + e.getMessage()), BorderLayout.CENTER);
+                contentPanel.add(emergencyPanel, BorderLayout.CENTER);
+            }
+            
+            // Додаємо головну панель до вікна
+            getContentPane().add(contentPanel);
+            
+            // Створюємо головне меню
+            createMainMenu();
+            
+            System.out.println("### Ініціалізація головного вікна завершена ###");
+        } catch (Exception e) {
+            System.err.println("КРИТИЧНА ПОМИЛКА при ініціалізації головного вікна: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     /**
-     * Создание главного меню приложения
+     * Створення головного меню програми
      */
     private void createMainMenu() {
-        // Создаем строку меню
+        // Створюємо рядок меню
         javax.swing.JMenuBar menuBar = new javax.swing.JMenuBar();
         
         // Меню File
@@ -181,6 +269,11 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         
         // Додаємо роздільник
         fileMenu.addSeparator();
+        
+        // Пункт Logout
+        javax.swing.JMenuItem logoutItem = new javax.swing.JMenuItem("Вийти з облікового запису");
+        logoutItem.addActionListener(e -> logout());
+        fileMenu.add(logoutItem);
         
         // Пункт Exit
         javax.swing.JMenuItem exitItem = new javax.swing.JMenuItem(messages.getString("menu.exit"));
@@ -235,17 +328,17 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         aboutItem.addActionListener(e -> showAboutDialog());
         helpMenu.add(aboutItem);
         
-        // Добавляем меню в строку меню
+        // Додаємо меню в рядок меню
         menuBar.add(fileMenu);
         menuBar.add(viewMenu);
         menuBar.add(helpMenu);
         
-        // Устанавливаем меню для окна
+        // Встановлюємо меню для вікна
         setJMenuBar(menuBar);
     }
     
     /**
-     * Показывает диалог "О программе"
+     * Показує діалог "Про програму"
      */
     private void showAboutDialog() {
         AboutDialog dialog = new AboutDialog(this, messages);
@@ -268,10 +361,102 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                log.info("Application is closing...");
-                System.exit(0);
+                // Закриваємо з'єднання з сервісами при закритті вікна
+                dispose();
+            }
+            
+            @Override
+            public void windowOpened(WindowEvent e) {
+                System.out.println("MainFrame: вікно відкрито");
+                if (!projectTreePanel.isInitialized()) {
+                    // Ініціалізуємо лише якщо потрібно
+                    initializeProjectTree();
+                }
             }
         });
+        
+        // Додаємо обробник зміни розмірів вікна
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                // Оновлюємо розміри колонок при зміні розміру вікна
+                if (currentBoard != null) {
+                    SwingUtilities.invokeLater(() -> {
+                        updateColumnSizes();
+                    });
+                }
+            }
+        });
+    }
+    
+    /**
+     * Оновлення розмірів колонок при зміні розміру вікна
+     */
+    private void updateColumnSizes() {
+        try {
+            // Розраховуємо ширину колонки на основі нового розміру вікна
+            int containerWidth = Math.max(getWidth() - 300, 600);
+            int columnWidth = ResponsiveHelper.calculateColumnWidth(containerWidth, Status.values().length);
+            
+            // Встановлюємо мінімальну допустиму ширину колонки
+            int minColumnWidth = 200;
+            columnWidth = Math.max(columnWidth, minColumnWidth);
+            
+            System.out.println("updateColumnSizes: ширина колонки = " + columnWidth);
+            
+            // Оновлюємо ширину кожної колонки
+            for (BoardColumnPanel column : columns.values()) {
+                column.setPreferredSize(new Dimension(columnWidth, column.getPreferredSize().height));
+            }
+            
+            // Оновлюємо інтерфейс
+            columnsPanel.revalidate();
+            columnsPanel.repaint();
+        } catch (Exception e) {
+            System.err.println("updateColumnSizes: помилка при оновленні розмірів: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Відкриття діалогу перегляду/редагування задачі
+     * 
+     * @param issue задача для перегляду/редагування
+     */
+    private void openIssueDialog(Issue issue) {
+        if (currentBoard == null) {
+            SwingHelper.showErrorDialog(this, 
+                    messages.getString("app.error"), 
+                    messages.getString("board.select_prompt"));
+            return;
+        }
+        
+        // Показуємо діалог для редагування задачі
+        IssueDialog dialog = new IssueDialog(
+            this, 
+            issue, 
+            currentBoard, 
+            currentUser,
+            boardService,
+            messages
+        );
+        dialog.setVisible(true);
+        
+        // Якщо задачу було оновлено, оновлюємо дошку
+        if (dialog.isIssueUpdated()) {
+            log.info("Issue updated successfully");
+            loadIssues(currentBoard);
+            
+            // Додаємо сповіщення про оновлення задачі
+            String notificationMessage = "Задачу " + issue.getKey() + " '" + issue.getTitle() + 
+                                       "' було оновлено";
+            NotificationPanel.Notification notification = new NotificationPanel.Notification(
+                    "Задачу оновлено", 
+                    notificationMessage, 
+                    NotificationPanel.NotificationType.ISSUE_UPDATED,
+                    issue.getId());
+            notificationPanel.addNotification(notification);
+        }
     }
     
     /**
@@ -280,64 +465,88 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
      * @param board поточна дошка
      */
     private void createBoardColumns(Board board) {
-        // Очищаємо панель колонок
-        columnsPanel.removeAll();
-        columns.clear();
-        
-        log.debug("Створюємо колонки для дошки {}", board.getName());
-        
-        // Якщо користувач має права адміністратора, додаємо кнопку створення нової задачі
-        if (currentUser.isAdmin()) {
-            JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            JButton addIssueButton = new JButton(messages.getString("issue.create"));
-            addIssueButton.addActionListener(e -> showCreateIssueDialog());
-            controlPanel.add(addIssueButton);
+        try {
+            System.out.println("createBoardColumns: початок створення колонок для дошки " + board.getName());
             
-            // Додаємо панель з кнопками в верхню частину дошки
-            boardPanel.add(controlPanel, BorderLayout.SOUTH);
-        }
-        
-        // Додаємо відступ між краєм вікна та першою колонкою
-        columnsPanel.add(Box.createHorizontalStrut(UiConstants.COMPONENT_SPACING));
-        
-        // Створюємо колонки для кожного статусу
-        Status[] statuses = Status.values();
-        
-        // Розраховуємо ширину колонки на основі розміру вікна
-        int containerWidth = getWidth() - 250; // враховуємо ширину панелі проектів
-        int columnWidth = ResponsiveHelper.calculateColumnWidth(containerWidth, statuses.length);
-        
-        for (Status status : statuses) {
-            log.debug("Створюємо колонку для статусу {}", status);
+            // Очищаємо панель колонок
+            columnsPanel.removeAll();
+            columns.clear();
             
-            BoardColumnPanel column = new BoardColumnPanel(
-                    status,
-                    messages,
-                    cardDragHandler,
-                    boardService
-            );
-            
-            // Встановлюємо адаптивну ширину колонки
-            column.setPreferredSize(new Dimension(columnWidth, 0));
-            
-            // Важливо: явно встановлюємо BoardService для колонки
-            column.setBoardService(boardService);
-            log.debug("Встановлено BoardService для колонки {}", status);
-            
-            columns.put(status, column);
-            columnsPanel.add(column);
-            
-            // Додаємо відступ між колонками
-            if (status.ordinal() < statuses.length - 1) {
-                columnsPanel.add(Box.createHorizontalStrut(UiConstants.COMPONENT_SPACING));
+            // Якщо користувач має права адміністратора, додаємо кнопку створення нової задачі
+            if (currentUser.isAdmin()) {
+                JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                JButton addIssueButton = new JButton("Створити задачу");
+                addIssueButton.addActionListener(e -> showCreateIssueDialog());
+                controlPanel.add(addIssueButton);
+                
+                // Додаємо панель з кнопками в нижню частину дошки
+                boardPanel.add(controlPanel, BorderLayout.SOUTH);
             }
+            
+            // Додаємо відступ між краєм вікна та першою колонкою
+            columnsPanel.add(Box.createHorizontalStrut(UiConstants.COMPONENT_SPACING));
+            
+            // Створюємо колонки для кожного статусу
+            Status[] statuses = Status.values();
+            System.out.println("createBoardColumns: будемо створювати " + statuses.length + " колонок");
+            
+            // Розраховуємо ширину колонки на основі розміру вікна
+            int containerWidth = Math.max(getWidth() - 300, 600); // враховуємо ширину бічної панелі
+            int columnWidth = ResponsiveHelper.calculateColumnWidth(containerWidth, statuses.length);
+            System.out.println("createBoardColumns: ширина колонки = " + columnWidth);
+            
+            // Встановлюємо мінімальну допустиму ширину колонки
+            int minColumnWidth = 200;
+            columnWidth = Math.max(columnWidth, minColumnWidth);
+            
+            for (Status status : statuses) {
+                try {
+                    System.out.println("createBoardColumns: створюємо колонку для статусу " + status);
+                    
+                    BoardColumnPanel column = new BoardColumnPanel(
+                            status,
+                            messages,
+                            cardDragHandler,
+                            boardService
+                    );
+                    
+                    // Встановлюємо адаптивну ширину колонки
+                    column.setPreferredSize(new Dimension(columnWidth, 400));
+                    
+                    // Важливо: явно встановлюємо BoardService для колонки
+                    column.setBoardService(boardService);
+                    
+                    columns.put(status, column);
+                    columnsPanel.add(column);
+                    
+                    // Додаємо відступ між колонками
+                    if (status.ordinal() < statuses.length - 1) {
+                        columnsPanel.add(Box.createHorizontalStrut(UiConstants.COMPONENT_SPACING));
+                    }
+                    
+                    System.out.println("createBoardColumns: колонку " + status + " успішно створено");
+                } catch (Exception e) {
+                    System.err.println("createBoardColumns: помилка при створенні колонки " + status + ": " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            
+            // Додаємо відступ між останньою колонкою та краєм вікна
+            columnsPanel.add(Box.createHorizontalStrut(UiConstants.COMPONENT_SPACING));
+            
+            // Оновлюємо UI
+            columnsPanel.revalidate();
+            columnsPanel.repaint();
+            boardPanel.revalidate();
+            boardPanel.repaint();
+            mainPanel.revalidate();
+            mainPanel.repaint();
+            
+            System.out.println("createBoardColumns: колонки успішно створено");
+        } catch (Exception e) {
+            System.err.println("createBoardColumns: критична помилка при створенні колонок: " + e.getMessage());
+            e.printStackTrace();
         }
-        
-        // Додаємо відступ між останньою колонкою та краєм вікна
-        columnsPanel.add(Box.createHorizontalStrut(UiConstants.COMPONENT_SPACING));
-        
-        columnsPanel.revalidate();
-        columnsPanel.repaint();
     }
     
     /**
@@ -356,6 +565,20 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
             // Получаем задачи с сервиса вместо создания демо-задач
             List<ua.oip.jiralite.domain.Issue> issues = boardService.getBoardIssues(board);
             System.out.println("MainFrame.loadIssues: отримано " + issues.size() + " задач");
+            
+            // Обновляем панель поиска с новым списком задач
+            if (searchPanel != null) {
+                System.out.println("MainFrame.loadIssues: оновлюємо панель пошуку");
+                searchPanel.setIssues(issues);
+                
+                // Перевіряємо, чи налаштований обробник результатів
+                if (searchResultPanel != null) {
+                    System.out.println("MainFrame.loadIssues: налаштовуємо обробник результатів пошуку");
+                    searchPanel.setSearchResultHandler(foundIssues -> {
+                        searchResultPanel.displayResults(foundIssues);
+                    });
+                }
+            }
             
             // Выводим весь список задач для отладки
             System.out.println("MainFrame.loadIssues: список всіх задач:");
@@ -459,6 +682,19 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         if (dialog.isIssueCreated()) {
             log.info("Issue created successfully");
             loadIssues(currentBoard);
+            
+            // Додаємо сповіщення про створення задачі
+            Issue createdIssue = dialog.getIssue();
+            if (createdIssue != null) {
+                String notificationMessage = "Задачу " + createdIssue.getKey() + " '" + 
+                                           createdIssue.getTitle() + "' було створено";
+                NotificationPanel.Notification notification = new NotificationPanel.Notification(
+                        "Задачу створено", 
+                        notificationMessage, 
+                        NotificationPanel.NotificationType.ISSUE_CREATED,
+                        createdIssue.getId());
+                notificationPanel.addNotification(notification);
+            }
         }
     }
     
@@ -476,25 +712,154 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
     
     @Override
     public void onBoardSelected(Board board) {
-        log.debug("Board selected: {}", board);
-        
-        // Якщо дошка не має імені, встановлюємо його
-        if (board.getName() == null) {
-            board.setName("Kanban Board");
+        try {
+            log.debug("Board selected: {}", board);
+            System.out.println("Вибрано дошку: " + board.getName());
+            
+            // Якщо дошка не має імені, встановлюємо його
+            if (board.getName() == null) {
+                board.setName("Kanban Board");
+            }
+            
+            // Зберігаємо посилання на поточну дошку
+            currentBoard = board;
+            
+            // Оновлюємо заголовок
+            boardTitleLabel.setText(
+                    "Дошка: " + board.getName() + 
+                    " (" + board.getProject().getName() + ")");
+            
+            // Створюємо колонки для дошки
+            createBoardColumns(board);
+            
+            // Завантажуємо та відображаємо задачі
+            loadIssues(board);
+            
+            // Додаємо повідомлення про вибір дошки
+            String notificationMessage = "Вибрано дошку '" + board.getName() + "' проекту '" + 
+                                       board.getProject().getName() + "'";
+            NotificationPanel.Notification notification = new NotificationPanel.Notification(
+                    "Дошка вибрана", 
+                    notificationMessage, 
+                    NotificationPanel.NotificationType.GENERAL);
+            notificationPanel.addNotification(notification);
+            
+            System.out.println("Дошку успішно завантажено");
+        } catch (Exception e) {
+            System.err.println("Помилка при виборі дошки: " + e.getMessage());
+            e.printStackTrace();
         }
-        
-        // Зберігаємо посилання на поточну дошку
-        currentBoard = board;
-        
-        // Оновлюємо заголовок
-        boardTitleLabel.setText(
-                messages.getString("board.title") + ": " + board.getName() + 
-                " (" + board.getProject().getName() + ")");
-        
-        // Створюємо колонки для дошки
-        createBoardColumns(board);
-        
-        // Загружаем и отображаем задачи
-        loadIssues(board);
+    }
+    
+    /**
+     * Явно ініціалізує дерево проектів
+     */
+    private void initializeProjectTree() {
+        try {
+            System.out.println("Явна ініціалізація дерева проектів...");
+            
+            // Отримуємо проекти користувача
+            List<Project> projects = boardService.getProjectsByUser(currentUser);
+            if (projects.isEmpty()) {
+                System.out.println("УВАГА: Список проектів порожній!");
+            }
+            
+            // Перевіряємо, чи правильно працює дерево проектів
+            if (projectTreePanel != null) {
+                // Перевіряємо видимість панелі
+                System.out.println("Стан панелі проектів: " + 
+                    "visible=" + projectTreePanel.isVisible() + 
+                    ", showing=" + projectTreePanel.isShowing());
+                
+                // Оновлюємо вигляд панелі
+                projectTreePanel.revalidate();
+                projectTreePanel.repaint();
+            } else {
+                System.out.println("ПОМИЛКА: projectTreePanel є null!");
+            }
+        } catch (Exception e) {
+            System.err.println("Помилка при ініціалізації дерева проектів: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Вихід з поточного облікового запису та повернення до вікна авторизації
+     */
+    private void logout() {
+        try {
+            // Отримуємо екземпляр сервісу аутентифікації
+            AuthService authService = AuthService.getInstance();
+            
+            // Виходимо з системи
+            authService.logout();
+            
+            // Закриваємо всі вікна Java та створюємо нове вікно авторизації
+            closePreviousWindowsAndRestartLogin(authService);
+        } catch (Exception e) {
+            System.err.println("Помилка при виході з системи: " + e.getMessage());
+            e.printStackTrace();
+            
+            try {
+                // Навіть у випадку помилки спробуємо закрити всі вікна
+                closePreviousWindowsAndRestartLogin(AuthService.getInstance());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                
+                // Остання спроба - просто створення нового вікна
+                new LoginFrame(AuthService.getInstance()).setVisible(true);
+            }
+        }
+    }
+    
+    /**
+     * Метод для закриття всіх існуючих вікон та перезапуску вікна логіну
+     */
+    private void closePreviousWindowsAndRestartLogin(AuthService authService) {
+        try {
+            // Ховаємо поточне вікно негайно
+            setVisible(false);
+            
+            // Отримуємо всі активні фрейми
+            java.awt.Frame[] frames = java.awt.Frame.getFrames();
+            
+            // Закриваємо всі фрейми, крім того, з яким зараз працюємо
+            for (java.awt.Frame frame : frames) {
+                if (frame != this && frame.isDisplayable()) {
+                    frame.setVisible(false);
+                    frame.dispose();
+                }
+            }
+            
+            // Звільняємо ресурси поточного вікна
+            removeAll();
+            dispose();
+            
+            // Запускаємо збирач сміття
+            System.gc();
+            
+            // Створюємо нове вікно логіну в потоці EDT
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    // Невелика пауза
+                    Thread.sleep(100);
+                    
+                    // Створюємо та показуємо вікно авторизації
+                    LoginFrame loginFrame = new LoginFrame(authService);
+                    loginFrame.setVisible(true);
+                    
+                } catch (Exception e) {
+                    System.err.println("Помилка при створенні вікна входу: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
+        } catch (Exception e) {
+            System.err.println("Помилка при закритті вікон: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Якщо все зовсім погано - просто створюємо нове вікно
+            LoginFrame loginFrame = new LoginFrame(authService);
+            loginFrame.setVisible(true);
+        }
     }
 } 

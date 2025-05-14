@@ -86,7 +86,7 @@ public class ColumnDropTarget extends DropTargetAdapter {
             // Проверка прав пользователя на редактирование задач
             User currentUser = authService.getCurrentUser();
             if (currentUser == null || !authService.canEditIssue()) {
-                System.err.println("ColumnDropTarget: пользователь не имеет прав на изменение статуса задачи");
+                System.err.println("ColumnDropTarget: користувач не має прав на зміну статусу задачі");
                 SwingHelper.showErrorDialog(
                     SwingUtilities.getWindowAncestor(column),
                     messages.getString("app.error"),
@@ -104,34 +104,34 @@ public class ColumnDropTarget extends DropTargetAdapter {
             IssueCardModel issueModel = (IssueCardModel) transferable.getTransferData(
                     IssueCardMouseAdapter.CardTransferable.CARD_FLAVOR);
             
-            // Для пользователя с ролью USER проверяем, является ли он исполнителем задачи
+            // Для користувача з роллю USER перевіряємо, чи є він виконавцем задачі
             if (currentUser.getRole() == ua.oip.jiralite.domain.enums.Role.USER) {
-                // Проверяем, является ли текущий пользователь исполнителем данной задачи
-                // Ищем задачу в глобальном списке задач
+                // Перевіряємо, чи є поточний користувач виконавцем цієї задачі
+                // Шукаємо задачу в глобальному списку задач
                 boolean isAssignedToCurrentUser = false;
                 
                 try {
-                    // Получаем глобальный список задач через рефлексию
+                    // Отримуємо глобальний список задач через рефлексію
                     java.lang.reflect.Field globalIssuesField = boardService.getClass().getDeclaredField("globalIssues");
                     globalIssuesField.setAccessible(true);
                     @SuppressWarnings("unchecked")
                     java.util.List<Issue> globalIssues = (java.util.List<Issue>) globalIssuesField.get(null);
                     
-                    // Вывод отладочной информации
-                    System.out.println("ColumnDropTarget.drop: Проверка прав USER на редактирование задачи " + issueModel.getId());
-                    System.out.println("ColumnDropTarget.drop: Текущий пользователь: " + currentUser.getUsername() + " (ID: " + currentUser.getId() + ")");
+                    // Виведення відлагоджувальної інформації
+                    System.out.println("ColumnDropTarget.drop: Перевірка прав USER на редагування задачі " + issueModel.getId());
+                    System.out.println("ColumnDropTarget.drop: Поточний користувач: " + currentUser.getUsername() + " (ID: " + currentUser.getId() + ")");
                     
-                    // Ищем задачу в списке и проверяем исполнителя
+                    // Шукаємо задачу в списку та перевіряємо виконавця
                     for (Issue issue : globalIssues) {
                         if (issue.getId().equals(issueModel.getId())) {
-                            System.out.println("ColumnDropTarget.drop: Найдена задача с ID " + issue.getId());
+                            System.out.println("ColumnDropTarget.drop: Знайдено задачу з ID " + issue.getId());
                             
                             if (issue.getAssignee() != null) {
-                                System.out.println("ColumnDropTarget.drop: Исполнитель задачи: " + 
+                                System.out.println("ColumnDropTarget.drop: Виконавець задачі: " + 
                                     issue.getAssignee().getUsername() + " (ID: " + issue.getAssignee().getId() + ")");
                             } else {
-                                System.out.println("ColumnDropTarget.drop: У задачи не назначен исполнитель");
-                                // Если задача без исполнителя, позволяем пользователю USER редактировать её
+                                System.out.println("ColumnDropTarget.drop: У задачі не призначено виконавця");
+                                // Якщо задача без виконавця, дозволяємо користувачу USER редагувати її
                                 isAssignedToCurrentUser = true;
                                 break;
                             }
@@ -140,21 +140,21 @@ public class ColumnDropTarget extends DropTargetAdapter {
                                 issue.getAssignee().getId() != null && 
                                 currentUser.getId() != null &&
                                 issue.getAssignee().getId().equals(currentUser.getId())) {
-                                System.out.println("ColumnDropTarget.drop: Исполнитель совпадает с текущим пользователем");
+                                System.out.println("ColumnDropTarget.drop: Виконавець співпадає з поточним користувачем");
                                 isAssignedToCurrentUser = true;
                             } else {
-                                System.out.println("ColumnDropTarget.drop: Исполнитель не совпадает с текущим пользователем");
+                                System.out.println("ColumnDropTarget.drop: Виконавець не співпадає з поточним користувачем");
                             }
                             break;
                         }
                     }
                 } catch (Exception e) {
-                    System.err.println("ColumnDropTarget: ошибка при получении информации о задаче: " + e.getMessage());
+                    System.err.println("ColumnDropTarget: помилка при отриманні інформації про задачу: " + e.getMessage());
                     e.printStackTrace();
                 }
                 
                 if (!isAssignedToCurrentUser) {
-                    System.err.println("ColumnDropTarget: пользователь с ролью USER не может изменять задачи других исполнителей");
+                    System.err.println("ColumnDropTarget: користувач з роллю USER не може змінювати задачі інших виконавців");
                     SwingHelper.showErrorDialog(
                         SwingUtilities.getWindowAncestor(column),
                         messages.getString("app.error"),
@@ -194,17 +194,17 @@ public class ColumnDropTarget extends DropTargetAdapter {
             
             System.out.println("ColumnDropTarget.drop: змінено статус з " + oldStatus + " на " + status);
             
-            // Принудительно обновляем статус в глобальном списке задач 
-            // для синхронизации с UI
+            // Примусово оновлюємо статус у глобальному списку задач 
+            // для синхронізації з UI
             try {
-                // Получаем ID задачи
+                // Отримуємо ID задачі
                 Long issueId = issueModel.getId();
                 if (issueId != null) {
-                    System.out.println("ColumnDropTarget.drop: обновляем статус задачи с ID " + issueId + " в глобальном списке");
+                    System.out.println("ColumnDropTarget.drop: оновлюємо статус задачі з ID " + issueId + " у глобальному списку");
                     boardService.updateIssueStatus(issueId, status);
                 }
             } catch (Exception ex) {
-                System.err.println("ColumnDropTarget.drop: ошибка при обновлении статуса: " + ex.getMessage());
+                System.err.println("ColumnDropTarget.drop: помилка при оновленні статусу: " + ex.getMessage());
             }
             
             // Створюємо нову картку для задачі в цільовій колонці
@@ -218,7 +218,7 @@ public class ColumnDropTarget extends DropTargetAdapter {
                 // Якщо сервіс доступний, викликаємо метод оновлення статусу
                 boardService.updateIssueStatus(issueModel.getId(), status);
                 
-                // Убираем отложенное обновление доски, чтобы избежать "прыжков" карточек
+                // Прибираємо відкладене оновлення дошки, щоб уникнути "стрибків" карток
                 System.out.println("ColumnDropTarget: статус задачі з ID " + issueModel.getId() + 
                     " змінено з " + oldStatus + " на " + status);
             } else {
@@ -235,10 +235,10 @@ public class ColumnDropTarget extends DropTargetAdapter {
     }
     
     /**
-     * Находит панель карточек в колонке
+     * Знаходить панель карток у колонці
      */
     private JPanel findCardsPanel(JPanel columnPanel) {
-        // Ищем первую JPanel в колонке, предполагаем что это панель карточек
+        // Шукаємо першу JPanel у колонці, припускаємо що це панель карток
         for (Component comp : columnPanel.getComponents()) {
             if (comp instanceof JScrollPane) {
                 JScrollPane scrollPane = (JScrollPane) comp;

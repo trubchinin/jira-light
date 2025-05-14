@@ -353,34 +353,34 @@ public class IssueDialog extends JDialog {
             return;
         }
         
-        // Создаем новый комментарий
+        // Створюємо новий коментар
         Comment comment = new Comment(commentText, isNewIssue ? null : issue, currentUser);
         comment.setCreatedAt(LocalDateTime.now());
         
         if (isNewIssue) {
-            // Для новых задач просто показываем комментарий в списке, он будет сохранен при сохранении задачи
+            // Для нових задач просто показуємо коментар у списку, він буде збережений при збереженні задачі
             DefaultListModel<Comment> model = (DefaultListModel<Comment>) commentsList.getModel();
             model.addElement(comment);
         } else {
-            // Для существующей задачи добавляем комментарий в модель задачи
+            // Для існуючої задачі додаємо коментар до моделі задачі
             if (issue.getComments() == null) {
                 issue.setComments(new java.util.ArrayList<>());
             }
             issue.getComments().add(comment);
             
-            // Добавляем комментарий в список UI
+            // Додаємо коментар до списку UI
             DefaultListModel<Comment> model = (DefaultListModel<Comment>) commentsList.getModel();
             model.addElement(comment);
             
-            // Сохраняем комментарий через сервис
+            // Зберігаємо коментар через сервіс
             if (boardService != null) {
                 boardService.addComment(issue, currentUser, commentText);
-                System.out.println("IssueDialog.addComment: добавлен комментарий: " + 
+                System.out.println("IssueDialog.addComment: додано коментар: " + 
                     commentText.substring(0, Math.min(30, commentText.length())) + "...");
             }
         }
         
-        // Очищаем поле ввода
+        // Очищаємо поле вводу
         commentArea.setText("");
     }
     
@@ -398,10 +398,10 @@ public class IssueDialog extends JDialog {
             return;
         }
         
-        // Получаем текст описания из поля ввода
+        // Отримуємо текст опису з поля вводу
         String description = descriptionArea.getText();
         
-        // Получаем выбранного пользователя
+        // Отримуємо вибраного користувача
         User assignee = (User) assigneeComboBox.getSelectedItem();
         
         // Оновлюємо модель даними з форми
@@ -409,20 +409,20 @@ public class IssueDialog extends JDialog {
         issueModel.setDescription(description);
         issueModel.setPriority((Priority) priorityComboBox.getSelectedItem());
         
-        // Обновляем имя пользователя в UI модели
+        // Оновлюємо ім'я користувача в UI моделі
         if (assignee != null) {
             String fullName = assignee.getFullName();
             issueModel.setAssigneeName(fullName);
-            System.out.println("IssueDialog.saveIssue: Установлен assigneeName = " + fullName);
+            System.out.println("IssueDialog.saveIssue: Встановлено assigneeName = " + fullName);
         } else {
             issueModel.setAssigneeName(null);
-            System.out.println("IssueDialog.saveIssue: Исполнитель не выбран (null)");
+            System.out.println("IssueDialog.saveIssue: Виконавця не вибрано (null)");
         }
         
-        // Проверяем, что описание было корректно установлено в модель
-        System.out.println("IssueDialog.saveIssue: Описание из поля ввода: " + 
+        // Перевіряємо, що опис було коректно встановлено в модель
+        System.out.println("IssueDialog.saveIssue: Опис із поля вводу: " + 
             (description != null ? description.substring(0, Math.min(30, description.length())) + "..." : "null"));
-        System.out.println("IssueDialog.saveIssue: Описание в модели после установки: " + 
+        System.out.println("IssueDialog.saveIssue: Опис у моделі після встановлення: " + 
             (issueModel.getDescription() != null ? 
                 issueModel.getDescription().substring(0, Math.min(30, issueModel.getDescription().length())) + "..." : 
                 "null"));
@@ -437,17 +437,17 @@ public class IssueDialog extends JDialog {
             Issue createdIssue = null;
             
             if (isNewIssue) {
-                // Получаем данные из формы
+                // Отримуємо дані з форми
                 
-                // Выводим отладковую информацию перед созданием
-                System.out.println("IssueDialog.saveIssue: перед созданием issueModel.status = " + issueModel.getStatus());
+                // Виводимо відладкову інформацію перед створенням
+                System.out.println("IssueDialog.saveIssue: перед створенням issueModel.status = " + issueModel.getStatus());
                 
-                // Проверяем, нужно ли установить ID для новой задачи
+                // Перевіряємо, чи потрібно встановити ID для нової задачі
                 if (issueModel.getId() == null) {
-                    // Генерируем новый ID для задачи (в реальном приложении это будет делать сервер)
-                    long newId = System.currentTimeMillis() % 10000; // Для избежания больших чисел
+                    // Генеруємо новий ID для задачі (у реальному додатку це робитиме сервер)
+                    long newId = System.currentTimeMillis() % 10000; // Для уникнення великих чисел
                     issueModel.setId(newId);
-                    System.out.println("IssueDialog.saveIssue: создаем новую задачу, установлен ID = " + newId);
+                    System.out.println("IssueDialog.saveIssue: створюємо нову задачу, встановлено ID = " + newId);
                 }
                 
                 // Переконуємося, що статус в моделі відповідає вибраному в комбобоксі
@@ -469,7 +469,7 @@ public class IssueDialog extends JDialog {
                 System.out.println("IssueDialog.saveIssue: створено задачу з ID " + 
                     (createdIssue != null ? createdIssue.getId() : "null") + 
                     " та статусом " + (createdIssue != null ? createdIssue.getStatus() : "null") +
-                    " и исполнителем " + (createdIssue != null && createdIssue.getAssignee() != null ? 
+                    " та виконавцем " + (createdIssue != null && createdIssue.getAssignee() != null ? 
                                           createdIssue.getAssignee().getFullName() : "null"));
                 
                 // Вручну оновлюємо властивості задачі вже після створення
@@ -480,10 +480,10 @@ public class IssueDialog extends JDialog {
                     createdIssue.setPriority((Priority) priorityComboBox.getSelectedItem());
                     createdIssue.setStatus(selectedStatus); // Явно встановлюємо статус
                     
-                    // Явно устанавливаем назначенного пользователя
+                    // Явно встановлюємо призначеного користувача
                     if (assignee != null) {
                         createdIssue.setAssignee(assignee);
-                        System.out.println("IssueDialog.saveIssue: установлен исполнитель " + assignee.getFullName());
+                        System.out.println("IssueDialog.saveIssue: встановлено виконавця " + assignee.getFullName());
                     }
                     
                     // Зберігаємо задачу з усіма властивостями в глобальному списку
@@ -501,15 +501,15 @@ public class IssueDialog extends JDialog {
                         Comment comment = new Comment(commentText, createdIssue, currentUser);
                         comment.setCreatedAt(LocalDateTime.now());
                         
-                        // Инициализируем список комментариев, если он пустой
+                        // Ініціалізуємо список коментарів, якщо він порожній
                         if (createdIssue.getComments() == null) {
                             createdIssue.setComments(new java.util.ArrayList<>());
                         }
                         
-                        // Добавляем комментарий в список
+                        // Додаємо коментар до списку
                         createdIssue.getComments().add(comment);
                         
-                        System.out.println("IssueDialog.saveIssue: добавлен комментарий к задаче: " + 
+                        System.out.println("IssueDialog.saveIssue: додано коментар до задачі: " + 
                             commentText.substring(0, Math.min(30, commentText.length())) + "...");
                     }
                 }
@@ -533,31 +533,31 @@ public class IssueDialog extends JDialog {
                     Comment comment = new Comment(commentText, issue, currentUser);
                     comment.setCreatedAt(LocalDateTime.now());
                     
-                    // Инициализируем список комментариев, если он пустой
+                    // Ініціалізуємо список коментарів, якщо він порожній
                     if (issue.getComments() == null) {
                         issue.setComments(new java.util.ArrayList<>());
                     }
                     
-                    // Добавляем комментарий в список и обновляем модель
+                    // Додаємо коментар до списку та оновлюємо модель
                     issue.getComments().add(comment);
                     
-                    // Добавляем комментарий в UI модель
+                    // Додаємо коментар до UI моделі
                     DefaultListModel<Comment> commentsModel = (DefaultListModel<Comment>) commentsList.getModel();
                     commentsModel.addElement(comment);
                     
-                    // Очищаем поле ввода
+                    // Очищаємо поле вводу
                     commentArea.setText("");
                     
-                    System.out.println("IssueDialog.saveIssue: добавлен комментарий к существующей задаче: " + 
+                    System.out.println("IssueDialog.saveIssue: добавлено коментар до існуючої задачі: " + 
                         commentText.substring(0, Math.min(30, commentText.length())) + "...");
                 }
                 
                 // Логирование обновления
-                System.out.println("IssueDialog.saveIssue: обновляем существующую задачу ID=" + issue.getId() + 
+                System.out.println("IssueDialog.saveIssue: оновлюємо існуючу задачу ID=" + issue.getId() + 
                     ", title='" + issue.getTitle() + "'" +
                     ", статус=" + issue.getStatus() + 
-                    ", исполнитель=" + (issue.getAssignee() != null ? issue.getAssignee().getFullName() : "не назначен") +
-                    ", описание=" + (issue.getDescription() != null ? 
+                    ", виконавець=" + (issue.getAssignee() != null ? issue.getAssignee().getFullName() : "не призначений") +
+                    ", опис=" + (issue.getDescription() != null ? 
                         issue.getDescription().substring(0, Math.min(30, issue.getDescription().length())) + "..." : "null"));
                 
                 boardService.updateIssue(issue);
@@ -653,6 +653,24 @@ public class IssueDialog extends JDialog {
         return issueCreated;
     }
     
+    /**
+     * Возвращает признак обновления существующей задачи
+     * 
+     * @return true, если задача была обновлена; false - если операция отменена или создана новая задача
+     */
+    public boolean isIssueUpdated() {
+        return issueCreated && !isNewIssue;
+    }
+
+    /**
+     * Возвращает задачу
+     * 
+     * @return объект задачи (null, если задача не была создана/обновлена)
+     */
+    public Issue getIssue() {
+        return issue;
+    }
+
     /**
      * Возвращает модель задачи с пользовательскими данными
      * 

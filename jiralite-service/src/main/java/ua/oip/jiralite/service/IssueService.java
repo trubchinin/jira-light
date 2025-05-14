@@ -1,13 +1,12 @@
 package ua.oip.jiralite.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ua.oip.jiralite.domain.Issue;
-import ua.oip.jiralite.domain.Project;
 import ua.oip.jiralite.domain.User;
 import ua.oip.jiralite.repository.IssueRepository;
 import ua.oip.jiralite.repository.UserRepository;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Сервис для работы с задачами

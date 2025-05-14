@@ -17,7 +17,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-
 import ua.oip.jiralite.domain.enums.Priority;
 import ua.oip.jiralite.domain.enums.Status;
 

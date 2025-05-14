@@ -7,9 +7,12 @@ import java.util.ResourceBundle;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
@@ -34,12 +37,12 @@ public final class ProjectTreePanel extends JPanel {
         void onBoardSelected(Board board);
     }
     
-    private final User currentUser;
-    private final BoardService boardService;
-    private final ResourceBundle messages;
+    private User currentUser;
+    private BoardService boardService;
+    private ResourceBundle messages;
     
     private ProjectSelectionListener selectionListener;
-    private final JTree tree;
+    private JTree tree;
     
     /**
      * Конструктор панелі дерева проєктів
@@ -49,42 +52,79 @@ public final class ProjectTreePanel extends JPanel {
      * @param messages ресурси локалізації
      */
     public ProjectTreePanel(User currentUser, BoardService boardService, ResourceBundle messages) {
-        this.currentUser = currentUser;
-        this.boardService = boardService;
-        this.messages = messages;
-        
-        setLayout(new BorderLayout());
-        setBorder(BorderFactory.createTitledBorder("Проекти"));
-        
-        // Ініціалізуємо дерево
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Проекти");
-        tree = new JTree(new DefaultTreeModel(root));
-        tree.setRootVisible(false);
-        tree.setShowsRootHandles(true);
-        
-        // Додаємо загальний обробник вибору вузла в дереві
-        tree.addTreeSelectionListener(e -> {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) 
-                    tree.getLastSelectedPathComponent();
+        try {
+            System.out.println("=== Створення ProjectTreePanel ===");
             
-            if (node != null && selectionListener != null) {
-                Object userObject = node.getUserObject();
-                
-                if (userObject instanceof Project) {
-                    System.out.println("ProjectTreePanel: проект вибрано: " + ((Project) userObject).getName());
-                    selectionListener.onProjectSelected((Project) userObject);
-                } else if (userObject instanceof Board) {
-                    Board board = (Board) userObject;
-                    System.out.println("ProjectTreePanel: дошку вибрано: " + board + ", Name: " + board.getName());
-                    selectionListener.onBoardSelected(board);
+            // Ініціалізуємо поля класу
+            this.currentUser = currentUser;
+            this.boardService = boardService;
+            this.messages = messages;
+            
+            setLayout(new BorderLayout());
+            setBorder(BorderFactory.createTitledBorder("Проекти"));
+            
+            // Додаємо тестовий лейбл для перевірки
+            JLabel testLabel = new JLabel("Ініціалізація...");
+            testLabel.setHorizontalAlignment(JLabel.CENTER);
+            add(testLabel, BorderLayout.NORTH);
+            
+            // Ініціалізуємо дерево з найпростішою моделлю
+            System.out.println("Ініціалізація порожнього дерева");
+            DefaultMutableTreeNode root = new DefaultMutableTreeNode("Проекти");
+            root.add(new DefaultMutableTreeNode("Завантаження..."));
+            
+            tree = new JTree(root);
+            tree.setRootVisible(true);
+            tree.setShowsRootHandles(true);
+            
+            // Встановлюємо власний рендерер для дерева (якщо потрібно)
+            // tree.setCellRenderer(new ProjectTreeCellRenderer());
+            
+            // Додаємо загальний обробник вибору вузла в дереві
+            tree.addTreeSelectionListener(e -> {
+                try {
+                    DefaultMutableTreeNode node = (DefaultMutableTreeNode) 
+                            tree.getLastSelectedPathComponent();
+                    
+                    if (node != null && selectionListener != null) {
+                        Object userObject = node.getUserObject();
+                        
+                        if (userObject instanceof Project) {
+                            System.out.println("ProjectTreePanel: проект вибрано: " + ((Project) userObject).getName());
+                            selectionListener.onProjectSelected((Project) userObject);
+                        } else if (userObject instanceof Board) {
+                            Board board = (Board) userObject;
+                            System.out.println("ProjectTreePanel: дошку вибрано: " + board + ", Name: " + board.getName());
+                            selectionListener.onBoardSelected(board);
+                        }
+                    }
+                } catch (Exception ex) {
+                    System.err.println("Помилка при обробці вибору вузла: " + ex.getMessage());
                 }
-            }
-        });
-        
-        add(new JScrollPane(tree), BorderLayout.CENTER);
-        
-        // Завантажуємо проекти та дошки
-        loadProjects();
+            });
+            
+            System.out.println("Створення ScrollPane для дерева");
+            JScrollPane treeScrollPane = new JScrollPane(tree);
+            add(treeScrollPane, BorderLayout.CENTER);
+            
+            // Додаємо кнопку оновлення для тестування
+            JPanel buttonPanel = new JPanel();
+            JButton refreshButton = new JButton("Оновити");
+            refreshButton.addActionListener(e -> loadProjects());
+            buttonPanel.add(refreshButton);
+            add(buttonPanel, BorderLayout.SOUTH);
+            
+            System.out.println("=== ProjectTreePanel створено ===");
+            
+            // Завантажуємо проекти у фоновому потоці
+            SwingUtilities.invokeLater(this::loadProjects);
+            
+        } catch (Exception e) {
+            System.err.println("ПОМИЛКА при створенні ProjectTreePanel: " + e.getMessage());
+            e.printStackTrace();
+            setLayout(new BorderLayout());
+            add(new JLabel("Помилка завантаження: " + e.getMessage()), BorderLayout.CENTER);
+        }
     }
     
     /**
@@ -98,34 +138,103 @@ public final class ProjectTreePanel extends JPanel {
      * Завантаження проєктів користувача
      */
     public void loadProjects() {
-        // Очистка дерева
-        tree.setModel(null);
-        
-        // Отримання проєктів користувача та додавання їх у дерево
-        List<Project> projects = boardService.getProjectsByUser(currentUser);
-        
-        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Projects");
-        for (Project project : projects) {
-            DefaultMutableTreeNode projectNode = new DefaultMutableTreeNode(project);
-            rootNode.add(projectNode);
+        try {
+            System.out.println("ProjectTreePanel.loadProjects: початок завантаження проектів");
             
-            System.out.println("Додаємо проект: " + project.getName() + " (ID: " + project.getId() + ")");
+            // Змінюємо курсор на "очікування"
+            setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
             
-            // Додавання дошок проєкту
-            List<Board> boards = boardService.getBoardsByProject(project);
-            System.out.println("Отримали " + boards.size() + " дошок для проекту " + project.getName());
+            // Найпростіша тестова модель
+            DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Проекти");
             
-            for (Board board : boards) {
-                System.out.println("ProjectTreePanel: додаємо дошку: " + board + " (ID: " + board.getId() + ")");
-                DefaultMutableTreeNode boardNode = new DefaultMutableTreeNode(board);
-                projectNode.add(boardNode);
+            try {
+                // Отримання проєктів користувача та додавання їх у дерево
+                List<Project> projects = boardService.getProjectsByUser(currentUser);
+                System.out.println("ProjectTreePanel.loadProjects: отримано " + projects.size() + " проектів");
+                
+                if (projects.isEmpty()) {
+                    // Якщо проектів немає, додаємо заглушку
+                    rootNode.add(new DefaultMutableTreeNode("Немає доступних проектів"));
+                } else {
+                    // Додаємо всі проекти
+                    for (Project project : projects) {
+                        DefaultMutableTreeNode projectNode = new DefaultMutableTreeNode(project);
+                        rootNode.add(projectNode);
+                        
+                        System.out.println("ProjectTreePanel.loadProjects: додаємо проект: " + project.getName() + " (ID: " + project.getId() + ")");
+                        
+                        try {
+                            // Додавання дошок проєкту
+                            List<Board> boards = boardService.getBoardsByProject(project);
+                            System.out.println("ProjectTreePanel.loadProjects: отримали " + boards.size() + " дошок для проекту " + project.getName());
+                            
+                            if (boards.isEmpty()) {
+                                // Якщо дошок немає, додаємо заглушку
+                                projectNode.add(new DefaultMutableTreeNode("Немає дошок"));
+                            } else {
+                                // Додаємо всі дошки
+                                for (Board board : boards) {
+                                    System.out.println("ProjectTreePanel.loadProjects: додаємо дошку: " + board.getName() + " (ID: " + board.getId() + ")");
+                                    DefaultMutableTreeNode boardNode = new DefaultMutableTreeNode(board);
+                                    projectNode.add(boardNode);
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Помилка при завантаженні дошок для проекту: " + e.getMessage());
+                            projectNode.add(new DefaultMutableTreeNode("Помилка завантаження дошок"));
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Помилка при завантаженні проектів: " + e.getMessage());
+                e.printStackTrace();
+                rootNode.add(new DefaultMutableTreeNode("Помилка завантаження проектів"));
             }
+            
+            // Встановлюємо модель дерева
+            System.out.println("ProjectTreePanel.loadProjects: встановлюємо модель дерева");
+            tree.setModel(new DefaultTreeModel(rootNode));
+            
+            // Розгортаємо всі вузли
+            for (int i = 0; i < tree.getRowCount(); i++) {
+                tree.expandRow(i);
+            }
+            
+            // Повертаємо звичайний курсор
+            setCursor(java.awt.Cursor.getDefaultCursor());
+            
+            // Оновлюємо UI
+            revalidate();
+            repaint();
+            
+            System.out.println("ProjectTreePanel.loadProjects: завершено");
+        } catch (Exception e) {
+            System.err.println("КРИТИЧНА ПОМИЛКА при завантаженні проектів: " + e.getMessage());
+            e.printStackTrace();
+            setCursor(java.awt.Cursor.getDefaultCursor());
+        }
+    }
+    
+    /**
+     * Метод для перезавантаження проектів (використовується з MainFrame)
+     */
+    public void refreshProjects() {
+        loadProjects();
+    }
+    
+    /**
+     * Перевіряє, чи було ініціалізоване дерево проектів
+     * @return true якщо дерево ініціалізоване і містить проекти
+     */
+    public boolean isInitialized() {
+        if (tree == null || tree.getModel() == null) {
+            return false;
         }
         
-        tree.setModel(new DefaultTreeModel(rootNode));
-        for (int i = 0; i < tree.getRowCount(); i++) {
-            tree.expandRow(i);
-        }
+        DefaultMutableTreeNode root = (DefaultMutableTreeNode) tree.getModel().getRoot();
+        return root.getChildCount() > 0 && 
+               !(root.getChildCount() == 1 && 
+                 "Завантаження...".equals(((DefaultMutableTreeNode)root.getChildAt(0)).getUserObject()));
     }
     
     /**

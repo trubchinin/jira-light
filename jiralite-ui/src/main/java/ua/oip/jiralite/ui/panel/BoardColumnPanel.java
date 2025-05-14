@@ -186,6 +186,24 @@ public class BoardColumnPanel extends JPanel {
         // Можна додати якусь кнопку вдолу колонки (наприклад, "Додати задачу")
         JButton addButton = new JButton("+ Додати в " + status);
         addButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Встановлюємо мінімальну та бажану ширину кнопки
+        addButton.setMinimumSize(new Dimension(100, addButton.getPreferredSize().height));
+        addButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, addButton.getPreferredSize().height));
+        
+        // Встановлюємо явний розмір шрифту для кращої видимості
+        addButton.setFont(addButton.getFont().deriveFont(12.0f));
+        
+        // // Кольори для кращої видимості (закоментовано, щоб використати стандартні кольори теми)
+        // Color buttonBackground = new Color(14, 110, 238, 255);
+        // Color buttonText = Color.WHITE;
+        // 
+        // // Встановлюємо кольори
+        // addButton.setBackground(buttonBackground);
+        // addButton.setForeground(buttonText);
+        // addButton.setFocusPainted(false);
+        // addButton.setOpaque(true); 
+        
         addButton.addActionListener(e -> {
             System.out.println("BoardColumnPanel: натиснуто кнопку додавання задачі в колонці " + status);
             
@@ -312,6 +330,8 @@ public class BoardColumnPanel extends JPanel {
         });
         
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bottomPanel.setMinimumSize(new Dimension(100, 40));
+        bottomPanel.setPreferredSize(new Dimension(getPreferredSize().width, 40));
         bottomPanel.add(addButton);
         
         add(bottomPanel, BorderLayout.SOUTH);

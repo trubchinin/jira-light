@@ -156,45 +156,45 @@ public class IssueCardMouseAdapter extends MouseAdapter implements DragGestureLi
     
     @Override
     public void dragDropEnd(DragSourceDropEvent dsde) {
-        // Если перетаскивание не завершилось успехом или карточка
-        // по какой-то причине осталась невидимой
+        // Якщо перетягування не завершилось успішно або картка
+        // з якоїсь причини залишилася невидимою
         if (draggedCard != null) {
-            // Восстанавливаем видимость карточки
+            // Відновлюємо видимість картки
             draggedCard.setVisible(true);
             
-            // Если перетаскивание было не успешным, возвращаем карточку на место
+            // Якщо перетягування було не успішним, повертаємо картку на місце
             if (!dsde.getDropSuccess() && originalParent != null) {
-                // Проверяем, что карточка все еще существует
+                // Перевіряємо, що картка все ще існує
                 if (draggedCard.getParent() != originalParent) {
-                    // Если карточка была удалена из родителя, возвращаем ее обратно
+                    // Якщо картка була видалена з батьківського контейнера, повертаємо її назад
                     try {
                         originalParent.add(draggedCard, originalIndex);
                         draggedCard.setLocation(originalLocation);
                         originalParent.revalidate();
                         originalParent.repaint();
                         
-                        // Если родительский контейнер - колонка Kanban, обновляем структуру данных
+                        // Якщо батьківський контейнер - колонка Kanban, оновлюємо структуру даних
                         if (originalParent.getParent() instanceof BoardColumnPanel) {
                             BoardColumnPanel columnPanel = (BoardColumnPanel) originalParent.getParent();
                             columnPanel.restoreCard(draggedCard);
                         }
                     } catch (Exception e) {
-                        // Восстановление не удалось, логируем ошибку
-                        System.err.println("Не удалось восстановить карточку: " + e.getMessage());
+                        // Відновлення не вдалося, логуємо помилку
+                        System.err.println("Не вдалося відновити картку: " + e.getMessage());
                         e.printStackTrace();
                     }
                 }
             }
         }
         
-        // Очищаем состояние
+        // Очищуємо стан
         isDragging = false;
         draggedCard = null;
         originalParent = null;
     }
     
     /**
-     * Класс для передачи карточки в операции Drag and Drop
+     * Клас для передачі картки в операції Drag and Drop
      */
     public static class CardTransferable implements Transferable {
         
@@ -229,7 +229,7 @@ public class IssueCardMouseAdapter extends MouseAdapter implements DragGestureLi
     }
     
     /**
-     * Вспомогательный класс для работы с координатами в Swing
+     * Допоміжний клас для роботи з координатами в Swing
      */
     private static class SwingUtilities {
         public static Point convertPoint(Component source, Point pt, Component destination) {
@@ -261,13 +261,13 @@ public class IssueCardMouseAdapter extends MouseAdapter implements DragGestureLi
     @Override
     public void mouseDragged(MouseEvent e) {
         if (draggedCard != null) {
-            // Отменяем стандартное поведение выделения текста
+            // Скасовуємо стандартну поведінку виділення тексту
             e.consume();
             
             if (!isDragging && (Math.abs(e.getX()) + Math.abs(e.getY()) > DRAG_THRESHOLD)) {
-                System.out.println("IssueCardMouseAdapter: начинаем перетаскивание");
-                // Запускаем перетаскивание через DragSource, если оно еще не активно
-                // Реальная логика перетаскивания уже реализована в DragGestureListener
+                System.out.println("IssueCardMouseAdapter: починаємо перетягування");
+                // Запускаємо перетягування через DragSource, якщо воно ще не активне
+                // Реальна логіка перетягування вже реалізована в DragGestureListener
             }
         }
     }

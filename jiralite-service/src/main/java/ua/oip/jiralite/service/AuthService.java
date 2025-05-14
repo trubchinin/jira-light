@@ -7,7 +7,7 @@ import ua.oip.jiralite.domain.enums.Role;
 import ua.oip.jiralite.repository.UserRepository;
 
 /**
- * Сервис аутентификации пользователей
+ * Сервіс автентифікації користувачів
  */
 public class AuthService {
     
@@ -16,7 +16,7 @@ public class AuthService {
     private User currentUser;
     
     /**
-     * Возвращает Singleton экземпляр сервиса
+     * Повертає Singleton екземпляр сервісу
      */
     public static AuthService getInstance() {
         if (instance == null) {
@@ -26,7 +26,7 @@ public class AuthService {
     }
     
     /**
-     * Конструктор для внедрения зависимостей
+     * Конструктор для впровадження залежностей
      */
     public AuthService(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -36,16 +36,16 @@ public class AuthService {
      * Конструктор для Singleton
      */
     private AuthService() {
-        this.userRepository = null; // В реальном приложении здесь была бы инициализация репозитория
+        this.userRepository = null; // У реальному застосунку тут була б ініціалізація репозиторію
     }
     
     /**
-     * Аутентификация пользователя
+     * Автентифікація користувача
      * 
-     * @param login логин
+     * @param login логін
      * @param password пароль
-     * @return аутентифицированный пользователь
-     * @throws AuthException если аутентификация не удалась
+     * @return автентифікований користувач
+     * @throws AuthException якщо автентифікація не вдалася
      */
     public User signIn(String login, String password) throws AuthException {
         if (login == null || login.trim().isEmpty()) {
@@ -56,9 +56,9 @@ public class AuthService {
             throw new AuthException("Пароль не може бути порожнім");
         }
         
-        // Для тестового режима без репозитория
+        // Для тестового режиму без репозиторію
         if (userRepository == null) {
-            // Администратор
+            // Адміністратор
             if ("admin".equals(login) && "qwerty".equals(password)) {
                 User admin = new User(login, password, "Administrator", "admin@example.com");
                 admin.setId(1L);
@@ -67,7 +67,7 @@ public class AuthService {
                 return admin;
             }
             
-            // Зарегистрированный пользователь
+            // Зареєстрований користувач
             if ("john".equals(login) && "1234".equals(password)) {
                 User user = new User(login, password, "John Developer", "john@example.com");
                 user.setId(2L);
@@ -76,7 +76,7 @@ public class AuthService {
                 return user;
             }
             
-            // Гость с ограниченным доступом
+            // Гість з обмеженим доступом
             if ("guest".equals(login) && "guest".equals(password)) {
                 User guest = new User(login, password, "Guest User", "guest@example.com");
                 guest.setId(3L);
@@ -85,20 +85,20 @@ public class AuthService {
                 return guest;
             }
             
-            // Ошибка аутентификации
+            // Помилка автентифікації
             throw new AuthException("Невірний логін або пароль");
         }
         
-        // Для реального репозитория
+        // Для реального репозиторію
         if (userRepository != null) {
             User user = userRepository.findByLogin(login);
             
             if (user != null && password.equals(user.getPassword())) {
-                // Обновляем время последнего входа
+                // Оновлюємо час останнього входу
                 user.setLastLogin(LocalDateTime.now());
                 userRepository.save(user);
                 
-                // Устанавливаем текущего пользователя
+                // Встановлюємо поточного користувача
                 currentUser = user;
                 return user;
             }
@@ -108,11 +108,11 @@ public class AuthService {
     }
     
     /**
-     * Метод authenticate для совместимости с LoginAction
+     * Метод authenticate для сумісності з LoginAction
      * 
-     * @param username имя пользователя
+     * @param username ім'я користувача
      * @param password пароль
-     * @return пользователь или null, если аутентификация не удалась
+     * @return користувач або null, якщо автентифікація не вдалася
      */
     public User authenticate(String username, String password) {
         try {
@@ -123,14 +123,14 @@ public class AuthService {
     }
     
     /**
-     * Возвращает текущего пользователя
+     * Повертає поточного користувача
      */
     public User getCurrentUser() {
         return currentUser;
     }
     
     /**
-     * Определяет роль текущего пользователя
+     * Визначає роль поточного користувача
      */
     public Role getUserRole() {
         if (currentUser == null) {
@@ -141,14 +141,14 @@ public class AuthService {
     }
     
     /**
-     * Выход пользователя из системы
+     * Вихід користувача з системи
      */
     public void logout() {
         currentUser = null;
     }
     
     /**
-     * Проверяет, имеет ли текущий пользователь права на изменение задачи
+     * Перевіряє, чи має поточний користувач права на зміну задачі
      */
     public boolean canEditIssue() {
         if (currentUser == null) {
@@ -159,7 +159,7 @@ public class AuthService {
     }
     
     /**
-     * Проверяет, имеет ли текущий пользователь права на добавление новых задач
+     * Перевіряє, чи має поточний користувач права на додавання нових задач
      */
     public boolean canCreateIssue() {
         if (currentUser == null) {
@@ -170,7 +170,7 @@ public class AuthService {
     }
     
     /**
-     * Проверяет, имеет ли текущий пользователь права на удаление задач
+     * Перевіряє, чи має поточний користувач права на видалення задач
      */
     public boolean canDeleteIssue() {
         if (currentUser == null) {
@@ -181,7 +181,7 @@ public class AuthService {
     }
     
     /**
-     * Исключение при ошибке аутентификации
+     * Виняток при помилці автентифікації
      */
     public static class AuthException extends Exception {
         public AuthException(String message) {
