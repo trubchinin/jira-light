@@ -1,47 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<configuration scan="true" scanPeriod="30 seconds">
+    <!-- Налаштування виводу в консоль -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
     
+    <!-- Налаштування виводу в файл -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/jiralite.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/jiralite.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>logs/jiralite-%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
-            <totalSizeCap>100MB</totalSizeCap>
         </rollingPolicy>
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
     
-    <!-- Логи приложения -->
-    <logger name="ua.oip.jiralite" level="DEBUG" additivity="false">
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="FILE" />
-    </logger>
+    <!-- Рівні логування для різних пакетів -->
+    <logger name="ua.oip.jiralite" level="DEBUG" />
+    <logger name="ua.oip.jiralite.service" level="DEBUG" />
+    <logger name="ua.oip.jiralite.ui" level="INFO" />
     
-    <!-- Логи Hibernate -->
-    <logger name="org.hibernate" level="INFO" additivity="false">
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="FILE" />
-    </logger>
-    
-    <!-- SQL-запросы -->
-    <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="FILE" />
-    </logger>
-    
-    <!-- Параметры SQL-запросов -->
-    <logger name="org.hibernate.type.descriptor.sql" level="TRACE" additivity="false">
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="FILE" />
-    </logger>
-    
+    <!-- Кореневий рівень логування -->
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="FILE" />
