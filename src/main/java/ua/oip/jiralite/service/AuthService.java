@@ -111,6 +111,22 @@ public class AuthService {
     }
     
     /**
+     * Метод login для совместимости со старым кодом
+     * 
+     * @param username имя пользователя
+     * @param password пароль
+     * @return true, если аутентификация прошла успешно
+     */
+    public boolean login(String username, String password) {
+        try {
+            signIn(username, password);
+            return true;
+        } catch (AuthException e) {
+            return false;
+        }
+    }
+    
+    /**
      * Метод authenticate для совместимости с LoginAction
      * 
      * @param username имя пользователя

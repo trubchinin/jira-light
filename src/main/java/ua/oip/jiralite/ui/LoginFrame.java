@@ -27,7 +27,7 @@ public class LoginFrame extends JFrame {
     public LoginFrame(AuthService authService) {
         this.authService = authService;
         
-        setTitle("Jira Lite - Login");
+        setTitle("Jira Lite - Вхід");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 250);
         setLocationRelativeTo(null);
@@ -49,10 +49,10 @@ public class LoginFrame extends JFrame {
         // Форма входу
         JPanel formPanel = new JPanel(new GridLayout(2, 2, 10, 10));
         
-        JLabel usernameLabel = new JLabel("Username:");
+        JLabel usernameLabel = new JLabel("Ім'я користувача:");
         usernameField = new JTextField(20);
         
-        JLabel passwordLabel = new JLabel("Password:");
+        JLabel passwordLabel = new JLabel("Пароль:");
         passwordField = new JPasswordField(20);
         
         formPanel.add(usernameLabel);
@@ -64,7 +64,7 @@ public class LoginFrame extends JFrame {
         
         // Кнопки
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        loginButton = new JButton("Login");
+        loginButton = new JButton("Увійти");
         buttonPanel.add(loginButton);
         
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -84,21 +84,20 @@ public class LoginFrame extends JFrame {
         
         if (username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, 
-                "Username and password must not be empty", 
-                "Login Error", 
+                "Ім'я користувача та пароль не можуть бути порожніми", 
+                "Помилка входу", 
                 JOptionPane.ERROR_MESSAGE);
             return;
         }
         
         if (authService.login(username, password)) {
-            // Успішний вхід - відкриваємо головне вікно
-            MainFrame mainFrame = new MainFrame(authService);
-            mainFrame.setVisible(true);
-            dispose(); // Закриваємо вікно входу
+            // Успішний вхід - просто закриваємо це вікно,
+            // а нове відкриється через Launcher
+            dispose();
         } else {
             JOptionPane.showMessageDialog(this, 
-                "Invalid username or password", 
-                "Login Error", 
+                "Невірне ім'я користувача або пароль", 
+                "Помилка входу", 
                 JOptionPane.ERROR_MESSAGE);
             
             // Очищаємо поле пароля
@@ -139,8 +138,8 @@ public class LoginFrame extends JFrame {
             logger.error("Помилка при запуску додатка", e);
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, 
-                "Error starting application: " + e.getMessage(), 
-                "Error", 
+                "Помилка запуску додатка: " + e.getMessage(), 
+                "Помилка", 
                 JOptionPane.ERROR_MESSAGE);
         }
     }

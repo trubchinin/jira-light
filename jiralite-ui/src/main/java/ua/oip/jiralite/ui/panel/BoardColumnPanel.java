@@ -36,8 +36,8 @@ import ua.oip.jiralite.ui.listener.ColumnDropTarget;
 import ua.oip.jiralite.ui.listener.IssueCardMouseAdapter;
 import ua.oip.jiralite.ui.model.IssueCardModel;
 import ua.oip.jiralite.ui.util.SwingHelper;
-import ua.oip.jiralite.ui.util.UiConstants;
 import ua.oip.jiralite.ui.util.ThemeManager;
+import ua.oip.jiralite.ui.util.UiConstants;
 
 /**
  * Панель для отображения одной колонки Kanban-доски.
@@ -98,11 +98,22 @@ public class BoardColumnPanel extends JPanel {
      * Добавляет слушателя изменения темы
      */
     private void addThemeChangeListener() {
-        themeManager.addThemeChangeListener(new ThemeManager.ThemeChangeListener() {
-            @Override
-            public void onThemeChanged() {
-                updateTheme();
-            }
+        themeManager.addThemeChangeListener(() -> {
+            // Оновлюємо колір фону колонки
+            cardsPanel.setBackground(getColumnColor());
+            
+            // Оновлюємо границю з заголовком
+            setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(themeManager.getCurrentScheme().textSecondary, 1, true),
+                getColumnTitle(status),
+                TitledBorder.CENTER, 
+                TitledBorder.TOP,
+                UiConstants.SUBHEADER_FONT,
+                themeManager.getCurrentScheme().textPrimary));
+                
+            // Перемальовуємо компонент
+            revalidate();
+            repaint();
         });
     }
     
@@ -184,7 +195,8 @@ public class BoardColumnPanel extends JPanel {
         setMinimumSize(new Dimension(220, 300));
         
         // Можна додати якусь кнопку вдолу колонки (наприклад, "Додати задачу")
-        JButton addButton = new JButton("+ Додати в " + status);
+        String buttonText = messages.getString("column.add_button").replace("{0}", status.name());
+        JButton addButton = new JButton(buttonText);
         addButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         // Встановлюємо мінімальну та бажану ширину кнопки
@@ -194,15 +206,19 @@ public class BoardColumnPanel extends JPanel {
         // Встановлюємо явний розмір шрифту для кращої видимості
         addButton.setFont(addButton.getFont().deriveFont(12.0f));
         
-        // // Кольори для кращої видимості (закоментовано, щоб використати стандартні кольори теми)
-        // Color buttonBackground = new Color(14, 110, 238, 255);
-        // Color buttonText = Color.WHITE;
-        // 
-        // // Встановлюємо кольори
-        // addButton.setBackground(buttonBackground);
-        // addButton.setForeground(buttonText);
-        // addButton.setFocusPainted(false);
-        // addButton.setOpaque(true); 
+        // Налаштовуємо кольори кнопки для кращої видимості в обох темах
+        addButton.setBackground(themeManager.getCurrentScheme().accentColor);
+        addButton.setForeground(Color.WHITE);
+        addButton.setOpaque(true);
+        addButton.setBorderPainted(false);
+        addButton.setFocusPainted(false);
+        
+        // Додаємо слухач зміни теми для оновлення кольорів кнопки
+        themeManager.addThemeChangeListener(() -> {
+            // Оновлюємо колір згідно поточної теми, але зберігаємо стиль
+            addButton.setBackground(themeManager.getCurrentScheme().accentColor);
+            addButton.setForeground(Color.WHITE);
+        });
         
         addButton.addActionListener(e -> {
             System.out.println("BoardColumnPanel: натиснуто кнопку додавання задачі в колонці " + status);

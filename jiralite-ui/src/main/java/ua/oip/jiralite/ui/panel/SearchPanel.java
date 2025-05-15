@@ -12,8 +12,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -30,6 +32,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.SwingConstants;
 
 import ua.oip.jiralite.domain.Issue;
 import ua.oip.jiralite.domain.enums.Priority;
@@ -37,9 +40,10 @@ import ua.oip.jiralite.domain.enums.Status;
 import ua.oip.jiralite.service.BoardService;
 import ua.oip.jiralite.ui.util.ThemeManager;
 import ua.oip.jiralite.ui.util.UiConstants;
+import ua.oip.jiralite.ui.util.SwingHelper;
 
 /**
- * Панель поиска и фильтрации задач
+ * Панель пошуку та фільтрації задач
  */
 public class SearchPanel extends JPanel {
 
@@ -61,10 +65,10 @@ public class SearchPanel extends JPanel {
     private Consumer<List<Issue>> searchResultHandler;
     
     /**
-     * Конструктор панели поиска
+     * Конструктор панелі пошуку
      * 
-     * @param messages ресурсы локализации
-     * @param boardService сервис досок
+     * @param messages ресурси локалізації
+     * @param boardService сервіс дошок
      */
     public SearchPanel(ResourceBundle messages, BoardService boardService) {
         this.messages = messages;
@@ -76,23 +80,24 @@ public class SearchPanel extends JPanel {
     }
     
     /**
-     * Инициализация интерфейса панели поиска
+     * Ініціалізація інтерфейсу панелі пошуку
      */
     private void initializeUI() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(themeManager.getCurrentScheme().border, 1),
-                "Поиск и фильтрация",
+                messages.getString("search.title"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
                 UiConstants.SUBHEADER_FONT,
                 themeManager.getCurrentScheme().textPrimary));
         
-        // Панель с полем поиска
+        // Панель з полем пошуку
         JPanel searchInputPanel = new JPanel();
         searchInputPanel.setLayout(new BoxLayout(searchInputPanel, BoxLayout.Y_AXIS));
         
-        JLabel searchLabel = new JLabel("Поиск:");
+        // Створюємо мітку і поле для пошуку
+        JLabel searchLabel = new JLabel(messages.getString("search.label"));
         searchLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         searchField = new JTextField(20);
         searchField.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -106,7 +111,7 @@ public class SearchPanel extends JPanel {
             }
         });
         
-        includeDescription = new JCheckBox("Искать в описании");
+        includeDescription = new JCheckBox(messages.getString("search.include_description"), true);
         includeDescription.setSelected(true);
         includeDescription.setAlignmentX(Component.LEFT_ALIGNMENT);
         
@@ -116,40 +121,45 @@ public class SearchPanel extends JPanel {
         searchInputPanel.add(Box.createVerticalStrut(2));
         searchInputPanel.add(includeDescription);
         
-        // Панель с фильтрами
+        // Панель з фільтрами
         JPanel filtersPanel = new JPanel();
         filtersPanel.setLayout(new BoxLayout(filtersPanel, BoxLayout.Y_AXIS));
         
-        // Фильтр по статусу
+        // Фільтр за статусом
         JPanel statusPanel = new JPanel();
         statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.Y_AXIS));
-        JLabel statusLabel = new JLabel("Статус:");
+        JLabel statusLabel = new JLabel(messages.getString("search.status"));
         statusLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        statusComboBox = new JComboBox<>();
-        statusComboBox.setModel(new DefaultComboBoxModel<>(
-                new String[]{"Все", "To Do", "In Progress", "Done"}));
+        statusComboBox = new JComboBox<String>(
+                new String[]{messages.getString("search.all"), 
+                             messages.getString("status.todo"), 
+                             messages.getString("status.in_progress"), 
+                             messages.getString("status.done")});
         statusPanel.add(statusLabel);
         statusPanel.add(statusComboBox);
         
-        // Фильтр по приоритету
+        // Фільтр за пріоритетом
         JPanel priorityPanel = new JPanel();
         priorityPanel.setLayout(new BoxLayout(priorityPanel, BoxLayout.Y_AXIS));
-        JLabel priorityLabel = new JLabel("Приоритет:");
+        JLabel priorityLabel = new JLabel(messages.getString("search.priority"));
         priorityLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        priorityComboBox = new JComboBox<>();
-        priorityComboBox.setModel(new DefaultComboBoxModel<>(
-                new String[]{"Все", "Lowest", "Low", "Medium", "High", "Highest"}));
+        priorityComboBox = new JComboBox<String>(
+                new String[]{messages.getString("search.all"), 
+                             messages.getString("priority.lowest"), 
+                             messages.getString("priority.low"), 
+                             messages.getString("priority.medium"), 
+                             messages.getString("priority.high"), 
+                             messages.getString("priority.highest")});
         priorityPanel.add(priorityLabel);
         priorityPanel.add(priorityComboBox);
         
-        // Фильтр по исполнителю
+        // Фільтр за виконавцем
         JPanel assigneePanel = new JPanel();
         assigneePanel.setLayout(new BoxLayout(assigneePanel, BoxLayout.Y_AXIS));
-        JLabel assigneeLabel = new JLabel("Исполнитель:");
+        JLabel assigneeLabel = new JLabel(messages.getString("search.assignee"));
         assigneeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        assigneeComboBox = new JComboBox<>();
-        assigneeComboBox.setModel(new DefaultComboBoxModel<>(
-                new String[]{"Все", "Не назначено"}));
+        assigneeComboBox = new JComboBox<String>(
+                new String[]{messages.getString("search.all"), messages.getString("search.not_assigned")});
         assigneePanel.add(assigneeLabel);
         assigneePanel.add(assigneeComboBox);
         
@@ -157,11 +167,11 @@ public class SearchPanel extends JPanel {
         filtersPanel.add(priorityPanel);
         filtersPanel.add(assigneePanel);
         
-        // Панель с кнопками
+        // Панель з кнопками
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
         
-        resetButton = new JButton("Сбросить");
+        resetButton = new JButton(messages.getString("search.reset"));
         resetButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         resetButton.addActionListener(new ActionListener() {
             @Override
@@ -170,7 +180,7 @@ public class SearchPanel extends JPanel {
             }
         });
         
-        searchButton = new JButton("Найти");
+        searchButton = new JButton(messages.getString("search.find"));
         searchButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         searchButton.addActionListener(new ActionListener() {
             @Override
@@ -178,6 +188,10 @@ public class SearchPanel extends JPanel {
                 performSearch();
             }
         });
+        
+        // Застосовуємо стиль до кнопок
+        SwingHelper.applyButtonStyle(resetButton);
+        SwingHelper.applyButtonStyle(searchButton);
         
         buttonsPanel.add(resetButton);
         buttonsPanel.add(Box.createVerticalStrut(5));
@@ -196,12 +210,12 @@ public class SearchPanel extends JPanel {
         setMinimumSize(new Dimension(130, 0)); // Дуже вузька мінімальна ширина, висота розрахується
         setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE)); // Дозволяємо рости по висоті скільки потрібно
         
-        // Применить текущую тему
+        // Застосовуємо поточну тему
         applyTheme();
     }
     
     /**
-     * Добавляет слушателя изменения темы
+     * Додає слухача зміни теми
      */
     private void addThemeChangeListener() {
         themeManager.addThemeChangeListener(new ThemeManager.ThemeChangeListener() {
@@ -213,22 +227,22 @@ public class SearchPanel extends JPanel {
     }
     
     /**
-     * Применяет текущую тему к компонентам
+     * Застосовує поточну тему до компонентів
      */
     private void applyTheme() {
-        // Обновляем цвета и шрифты
+        // Оновлюємо кольори та шрифти
         setBackground(themeManager.getCurrentScheme().background);
         
-        // Обновляем рамку панели
+        // Оновлюємо рамку панелі
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(themeManager.getCurrentScheme().border, 1),
-                "Поиск и фильтрация",
+                messages.getString("search.title"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
                 UiConstants.SUBHEADER_FONT,
                 themeManager.getCurrentScheme().textPrimary));
         
-        // Обновляем компоненты
+        // Оновлюємо компоненти
         searchField.setBackground(themeManager.getCurrentScheme().panelBackground);
         searchField.setForeground(themeManager.getCurrentScheme().textPrimary);
         statusComboBox.setBackground(themeManager.getCurrentScheme().panelBackground);
@@ -240,7 +254,7 @@ public class SearchPanel extends JPanel {
         includeDescription.setBackground(themeManager.getCurrentScheme().background);
         includeDescription.setForeground(themeManager.getCurrentScheme().textPrimary);
         
-        // Обновляем масштаб
+        // Оновлюємо масштаб
         float scale = themeManager.getCurrentScale().getFactor();
         
         Font regularFont = UiConstants.DEFAULT_FONT.deriveFont(UiConstants.DEFAULT_FONT.getSize() * scale);
@@ -252,13 +266,13 @@ public class SearchPanel extends JPanel {
         searchButton.setFont(regularFont);
         resetButton.setFont(regularFont);
         
-        // Обновляем отрисовку
+        // Оновлюємо відрисовку
         revalidate();
         repaint();
     }
     
     /**
-     * Устанавливает список всех задач для поиска и фильтрации
+     * Встановлює список всіх задач для пошуку та фільтрації
      * @param issues список задач
      */
     public void setIssues(List<Issue> issues) {
@@ -267,22 +281,21 @@ public class SearchPanel extends JPanel {
     }
     
     /**
-     * Обновляет список исполнителей на основе текущих задач
+     * Оновлює список виконавців на основі поточних задач
      */
     private void updateAssigneeFilter() {
-        // Получаем уникальных исполнителей из списка задач
-        List<String> assignees = new ArrayList<>();
-        assignees.add("Все");
-        assignees.add("Не назначено");
+        // Отримуємо унікальних виконавців зі списку задач
+        Set<String> assignees = new HashSet<>();
+        assignees.add(messages.getString("search.all"));
         
-        // Добавляем имена исполнителей из задач
+        // Додаємо імена виконавців із задач
         allIssues.stream()
                 .filter(issue -> issue.getAssignee() != null)
                 .map(issue -> issue.getAssignee().getFullName())
                 .distinct()
                 .forEach(assignees::add);
         
-        // Обновляем модель комбобокса
+        // Оновлюємо модель комбобокса
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
         for (String assignee : assignees) {
             model.addElement(assignee);
@@ -291,15 +304,15 @@ public class SearchPanel extends JPanel {
     }
     
     /**
-     * Устанавливает обработчик результатов поиска
-     * @param handler функция-обработчик результатов
+     * Встановлює обробник результатів пошуку
+     * @param handler функція-обробник результатів
      */
     public void setSearchResultHandler(Consumer<List<Issue>> handler) {
         this.searchResultHandler = handler;
     }
     
     /**
-     * Выполняет поиск и фильтрацию задач
+     * Виконує пошук та фільтрацію задач
      */
     private void performSearch() {
         if (allIssues == null || allIssues.isEmpty()) {
@@ -312,10 +325,10 @@ public class SearchPanel extends JPanel {
         String assigneeFilter = (String) assigneeComboBox.getSelectedItem();
         boolean searchInDescription = includeDescription.isSelected();
         
-        // Фильтруем задачи
+        // Фільтруємо задачі
         List<Issue> filteredIssues = allIssues.stream()
                 .filter(issue -> {
-                    // Фильтр по тексту
+                    // Фільтр за текстом
                     boolean textMatch = true;
                     if (!searchText.isEmpty()) {
                         boolean titleMatch = issue.getTitle() != null && 
@@ -325,19 +338,19 @@ public class SearchPanel extends JPanel {
                         textMatch = titleMatch || descMatch;
                     }
                     
-                    // Фильтр по статусу
-                    boolean statusMatch = "Все".equals(statusFilter) || 
+                    // Фільтр за статусом
+                    boolean statusMatch = messages.getString("search.all").equals(statusFilter) || 
                                        mapUiStatusToEnum(statusFilter) == issue.getStatus();
                     
-                    // Фильтр по приоритету
-                    boolean priorityMatch = "Все".equals(priorityFilter) || 
+                    // Фільтр за пріоритетом
+                    boolean priorityMatch = messages.getString("search.all").equals(priorityFilter) || 
                                          mapUiPriorityToEnum(priorityFilter) == issue.getPriority();
                     
-                    // Фильтр по исполнителю
+                    // Фільтр за виконавцем
                     boolean assigneeMatch = true;
-                    if ("Все".equals(assigneeFilter)) {
+                    if (messages.getString("search.all").equals(assigneeFilter)) {
                         assigneeMatch = true;
-                    } else if ("Не назначено".equals(assigneeFilter)) {
+                    } else if (messages.getString("search.not_assigned").equals(assigneeFilter)) {
                         assigneeMatch = issue.getAssignee() == null;
                     } else {
                         assigneeMatch = issue.getAssignee() != null && 
@@ -348,49 +361,57 @@ public class SearchPanel extends JPanel {
                 })
                 .collect(Collectors.toList());
         
-        // Вызываем обработчик результатов
+        // Викликаємо обробник результатів
         if (searchResultHandler != null) {
             searchResultHandler.accept(filteredIssues);
         }
     }
     
     /**
-     * Сбрасывает все фильтры
+     * Скидає всі фільтри
      */
     private void resetFilters() {
         searchField.setText("");
-        statusComboBox.setSelectedItem("Все");
-        priorityComboBox.setSelectedItem("Все");
-        assigneeComboBox.setSelectedItem("Все");
+        statusComboBox.setSelectedItem(messages.getString("search.all"));
+        priorityComboBox.setSelectedItem(messages.getString("search.all"));
+        assigneeComboBox.setSelectedItem(messages.getString("search.all"));
         includeDescription.setSelected(true);
         
-        // Выполняем поиск с пустыми фильтрами (покажет все задачи)
+        // Виконуємо пошук з порожніми фільтрами (покаже всі задачі)
         performSearch();
     }
     
     /**
-     * Преобразует текстовое представление статуса в enum
+     * Перетворює текстове представлення статусу в enum
      */
     private Status mapUiStatusToEnum(String uiStatus) {
-        switch (uiStatus) {
-            case "To Do": return Status.TO_DO;
-            case "In Progress": return Status.IN_PROGRESS;
-            case "Done": return Status.DONE;
-            default: return null;
+        if (uiStatus.equals(messages.getString("status.todo"))) {
+            return Status.TO_DO;
+        } else if (uiStatus.equals(messages.getString("status.in_progress"))) {
+            return Status.IN_PROGRESS;
+        } else if (uiStatus.equals(messages.getString("status.done"))) {
+            return Status.DONE;
+        } else {
+            return null;
         }
     }
     
     /**
-     * Преобразует текстовое представление приоритета в enum
+     * Перетворює текстове представлення пріоритету в enum
      */
     private Priority mapUiPriorityToEnum(String uiPriority) {
-        switch (uiPriority) {
-            case "Lowest": return Priority.LOWEST;
-            case "Low": return Priority.LOW;
-            case "Medium": return Priority.MEDIUM;
-            case "High": return Priority.HIGH;
-            case "Highest": return Priority.HIGHEST;
-            default: return null;
+        if (uiPriority.equals(messages.getString("priority.lowest"))) {
+            return Priority.LOWEST;
+        } else if (uiPriority.equals(messages.getString("priority.low"))) {
+            return Priority.LOW;
+        } else if (uiPriority.equals(messages.getString("priority.medium"))) {
+            return Priority.MEDIUM;
+        } else if (uiPriority.equals(messages.getString("priority.high"))) {
+            return Priority.HIGH;
+        } else if (uiPriority.equals(messages.getString("priority.highest"))) {
+            return Priority.HIGHEST;
+        } else {
+            return null;
         }
     }
 } 

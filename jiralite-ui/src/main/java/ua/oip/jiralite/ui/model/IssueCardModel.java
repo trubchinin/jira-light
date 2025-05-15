@@ -7,7 +7,7 @@ import ua.oip.jiralite.domain.enums.Priority;
 import ua.oip.jiralite.domain.enums.Status;
 
 /**
- * Модель карточки задачи для пользовательского интерфейса
+ * Модель карточки задачі для користувальницького інтерфейсу
  */
 public class IssueCardModel implements Serializable {
     
@@ -22,12 +22,12 @@ public class IssueCardModel implements Serializable {
     private String assigneeName;
     
     /**
-     * Конструктор по умолчанию
+     * Конструктор за замовчуванням
      */
     public IssueCardModel() {}
     
     /**
-     * Конструктор со всеми параметрами
+     * Конструктор з усіма параметрами
      */
     public IssueCardModel(Long id, String key, String title, String description, 
                          Status status, Priority priority, String assigneeName) {
@@ -41,9 +41,9 @@ public class IssueCardModel implements Serializable {
     }
     
     /**
-     * Создает модель карточки из доменной сущности задачи
+     * Створює модель карточки з доменної сутності задачі
      * 
-     * @param issue доменная сущность задачи
+     * @param issue доменна сутність задачі
      * @return модель карточки
      */
     public static IssueCardModel fromIssue(Issue issue) {
@@ -54,9 +54,12 @@ public class IssueCardModel implements Serializable {
         IssueCardModel model = new IssueCardModel();
         model.setId(issue.getId());
         
+        // Отримуємо ресурси локалізації
+        java.util.ResourceBundle messages = java.util.ResourceBundle.getBundle("i18n.labels", new java.util.Locale("uk", "UA"));
+        
         try {
-            // Используем идентификатор задачи в формате PROJECT-ID если нет ключа
-            // или не удается получить ключ из модели
+            // Використовуємо ідентифікатор задачі в форматі PROJECT-ID якщо немає ключа
+            // або не вдається отримати ключ з моделі
             model.setKey("ISSUE-" + issue.getId());
         } catch (Exception e) {
             model.setKey("ISSUE-" + issue.getId());
@@ -66,28 +69,28 @@ public class IssueCardModel implements Serializable {
             model.setTitle(issue.getTitle());
         } catch (Exception e) {
             try {
-                // Если нет метода getTitle, пробуем getSummary (для совместимости)
-                model.setTitle("Задача #" + issue.getId());
+                // Якщо немає методу getTitle, спробуємо getSummary (для сумісності)
+                model.setTitle(messages.getString("issue.default_title") + issue.getId());
             } catch (Exception ex) {
-                model.setTitle("Задача #" + issue.getId());
+                model.setTitle(messages.getString("issue.default_title") + issue.getId());
             }
         }
         
-        // Улучшаем обработку описания задачи с подробным логированием
+        // Улучшаємо обробку опису задачі з детальним логуванням
         try {
             String description = issue.getDescription();
             System.out.println("IssueCardModel.fromIssue: ID=" + issue.getId() + 
-                ", описание=" + (description != null ? description.substring(0, Math.min(30, description.length())) + "..." : "null"));
+                ", опис=" + (description != null ? description.substring(0, Math.min(30, description.length())) + "..." : "null"));
             
             model.setDescription(description);
             
-            // Проверка, что описание было установлено
-            System.out.println("IssueCardModel.fromIssue: После установки, описание в модели=" + 
+            // Перевірка, що опис був встановлений
+            System.out.println("IssueCardModel.fromIssue: Після встановлення, опис в моделі=" + 
                 (model.getDescription() != null ? model.getDescription().substring(0, Math.min(30, model.getDescription().length())) + "..." : "null"));
         } catch (Exception e) {
-            System.err.println("IssueCardModel.fromIssue: Ошибка при установке описания: " + e.getMessage());
+            System.err.println("IssueCardModel.fromIssue: Помилка при встановленні опису: " + e.getMessage());
             e.printStackTrace();
-            // Не устанавливаем никакое значение по умолчанию, оставляем null или пустую строку
+            // Не встановлюємо жодне значення за замовчуванням, залишаємо null або пусту строку
         }
         
         try {
@@ -111,8 +114,8 @@ public class IssueCardModel implements Serializable {
         }
         
         try {
-            // Пробуем получить приоритет, если в доменной модели нет метода
-            // getPriority, используем средний приоритет по умолчанию
+            // Спробуємо отримати приоритет, якщо в доменній моделі немає методу
+            // getPriority, використовуємо середній приоритет за замовчуванням
             model.setPriority(Priority.MEDIUM);
         } catch (Exception e) {
             model.setPriority(Priority.MEDIUM);
@@ -122,26 +125,28 @@ public class IssueCardModel implements Serializable {
             try {
                 model.setAssigneeName(issue.getAssignee().getFullName());
                 System.out.println("IssueCardModel.fromIssue: ID=" + issue.getId() + 
-                    ", установлен assigneeName=" + model.getAssigneeName());
+                    ", встановлено assigneeName=" + model.getAssigneeName());
             } catch (Exception e) {
                 try {
                     model.setAssigneeName(issue.getAssignee().getUsername());
                     System.out.println("IssueCardModel.fromIssue: ID=" + issue.getId() + 
-                        ", установлен assigneeName из username=" + model.getAssigneeName());
+                        ", встановлено assigneeName з username=" + model.getAssigneeName());
                 } catch (Exception ex) {
-                    model.setAssigneeName("Неизвестно");
-                    System.err.println("IssueCardModel.fromIssue: Ошибка при получении имени пользователя: " + ex.getMessage());
+                    model.setAssigneeName(messages.getString("user.unknown"));
+                    System.err.println("IssueCardModel.fromIssue: Помилка при отриманні імені користувача: " + ex.getMessage());
                 }
             }
         } else {
             System.out.println("IssueCardModel.fromIssue: ID=" + issue.getId() + ", assignee=null");
-            model.setAssigneeName(null);
+            // Замість встановлення null, встановлюємо текст "не призначено" з ресурсів
+            model.setAssigneeName(messages.getString("issue.not_assigned"));
+            System.out.println("IssueCardModel.fromIssue: встановлено значення 'не призначено' замість null");
         }
         
         return model;
     }
     
-    // Геттеры и сеттеры
+    // Геттери і сеттери
     
     public Long getId() {
         return id;

@@ -1,6 +1,5 @@
 package ua.oip.jiralite.ui.frame;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -35,6 +34,16 @@ import ua.oip.jiralite.ui.util.UiConstants;
  */
 public final class LoginFrame extends JFrame {
     
+    // Відстеження стану MainFrame
+    private static boolean mainFrameOpened = false;
+    
+    /**
+     * Скидає стан прапора відкритого головного вікна
+     */
+    public static void resetMainFrameOpened() {
+        mainFrameOpened = false;
+    }
+    
     private final AuthService authService;
     private ResourceBundle messages;
     
@@ -52,7 +61,7 @@ public final class LoginFrame extends JFrame {
         this.authService = authService;
         
         // Завантаження ресурсів локалізації
-        loadResources(Locale.getDefault());
+        loadResources(new Locale("uk", "UA"));
         
         initializeUI();
         setupEventHandlers();
@@ -133,11 +142,11 @@ public final class LoginFrame extends JFrame {
         
         // Кнопка входу
         btnSignIn = new JButton(messages.getString("login.sign_in"));
-        btnSignIn.setForeground(Color.WHITE);
-        btnSignIn.setBackground(UiConstants.INFO_COLOR);
-        btnSignIn.setOpaque(true);
-        btnSignIn.setFocusPainted(false);
-        btnSignIn.setBorderPainted(false);
+        
+        // Застосовуємо стиль до кнопки
+        SwingHelper.applyButtonStyle(btnSignIn);
+        
+        // Додаткові налаштування кнопки
         btnSignIn.setAlignmentX(CENTER_ALIGNMENT);
         btnSignIn.setPreferredSize(new Dimension(150, 35));
         
@@ -153,7 +162,7 @@ public final class LoginFrame extends JFrame {
         infoPanel.setOpaque(false);
         infoPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
         
-        JLabel infoLabel = new JLabel("* Натисніть Enter для входу");
+        JLabel infoLabel = new JLabel(messages.getString("login.enter_hint"));
         infoLabel.setFont(UiConstants.SMALL_FONT);
         infoLabel.setForeground(UiConstants.TEXT_SECONDARY);
         infoPanel.add(infoLabel);
@@ -221,12 +230,17 @@ public final class LoginFrame extends JFrame {
             SwingUtilities.invokeLater(() -> {
                 dispose();
                 
-                // Створюємо головне вікно
-                ResourceBundle messages = ResourceBundle.getBundle("i18n.labels");
-                // Отримуємо екземпляр BoardService
-                ua.oip.jiralite.service.BoardService boardService = ua.oip.jiralite.service.BoardService.getInstance();
-                // Створюємо головне вікно з правильними параметрами
-                new MainFrame(boardService, messages, u).setVisible(true);
+                // Перевіряємо, щоб не створювалося більше одного головного вікна
+                if (!mainFrameOpened) {
+                    mainFrameOpened = true;
+                    
+                    // Створюємо головне вікно
+                    ResourceBundle messages = ResourceBundle.getBundle("i18n.labels", new Locale("uk", "UA"));
+                    // Отримуємо екземпляр BoardService
+                    ua.oip.jiralite.service.BoardService boardService = ua.oip.jiralite.service.BoardService.getInstance();
+                    // Створюємо головне вікно з правильними параметрами
+                    new MainFrame(boardService, messages, u).setVisible(true);
+                }
             });
         } catch (AuthService.AuthException ex) {
             SwingHelper.showError(this, ex.getMessage());

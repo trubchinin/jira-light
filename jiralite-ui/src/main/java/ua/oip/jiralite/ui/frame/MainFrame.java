@@ -77,7 +77,7 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
     // Колонки дошки (статус -> панель)
     private final Map<Status, BoardColumnPanel> columns = new HashMap<>();
     
-    // Новые компоненты
+    // Нові компоненти
     private SearchPanel searchPanel;
     private SearchResultPanel searchResultPanel;
     private NotificationPanel notificationPanel;
@@ -125,16 +125,16 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
             
             // Верхня панель з заголовком
             JPanel headerPanel = new JPanel(new BorderLayout());
-            boardTitleLabel = new JLabel("Jira Light - оберіть дошку");
+            boardTitleLabel = new JLabel(messages.getString("app.select_board"));
             boardTitleLabel.setFont(UiConstants.HEADER_FONT);
             boardTitleLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
             headerPanel.add(boardTitleLabel, BorderLayout.CENTER);
             
-            // Информация о текущем пользователе
+            // Інформація про поточного користувача
             JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-            JLabel userLabel = new JLabel("Користувач: " + currentUser.getFullName() + " (" + currentUser.getRole() + ")");
+            JLabel userLabel = new JLabel(messages.getString("user.current") + ": " + currentUser.getFullName() + " (" + currentUser.getRole() + ")");
             userLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-            JButton logoutButton = new JButton("Вийти");
+            JButton logoutButton = new JButton(messages.getString("menu.logout"));
             logoutButton.addActionListener(e -> logout());
             userInfoPanel.add(userLabel);
             userInfoPanel.add(logoutButton);
@@ -150,7 +150,7 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
                 
                 // Панель для дошки (права частина)
                 mainPanel = new JPanel(new BorderLayout());
-                mainPanel.setBorder(BorderFactory.createTitledBorder("Дошка"));
+                mainPanel.setBorder(BorderFactory.createTitledBorder(messages.getString("board.title")));
                 
                 // Панель колонок
                 columnsPanel = new JPanel();
@@ -165,7 +165,7 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
                 // Створюємо ліву панель з вертикальним BoxLayout
                 JPanel leftPanel = new JPanel();
                 leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-                leftPanel.setBorder(BorderFactory.createTitledBorder("Навігація"));
+                leftPanel.setBorder(BorderFactory.createTitledBorder(messages.getString("navigation.title")));
                 
                 // Ініціалізуємо дерево проектів
                 System.out.println("Ініціалізація дерева проектів...");
@@ -174,7 +174,7 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
                 
                 // Додаємо дерево проектів в окремий контейнер
                 JPanel projectsContainer = new JPanel(new BorderLayout());
-                projectsContainer.setBorder(BorderFactory.createTitledBorder("Проекти"));
+                projectsContainer.setBorder(BorderFactory.createTitledBorder(messages.getString("project.title")));
                 projectsContainer.add(projectTreePanel, BorderLayout.CENTER);
                 projectsContainer.setMinimumSize(new Dimension(sideBarWidth, 100));
                 projectsContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -263,7 +263,7 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         javax.swing.JMenu fileMenu = new javax.swing.JMenu(messages.getString("menu.file"));
         
         // Пункт Settings
-        javax.swing.JMenuItem settingsItem = new javax.swing.JMenuItem("Налаштування");
+        javax.swing.JMenuItem settingsItem = new javax.swing.JMenuItem(messages.getString("menu.settings"));
         settingsItem.addActionListener(e -> showSettingsDialog());
         fileMenu.add(settingsItem);
         
@@ -271,7 +271,7 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         fileMenu.addSeparator();
         
         // Пункт Logout
-        javax.swing.JMenuItem logoutItem = new javax.swing.JMenuItem("Вийти з облікового запису");
+        javax.swing.JMenuItem logoutItem = new javax.swing.JMenuItem(messages.getString("menu.logout"));
         logoutItem.addActionListener(e -> logout());
         fileMenu.add(logoutItem);
         
@@ -281,26 +281,33 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         fileMenu.add(exitItem);
         
         // Меню View
-        javax.swing.JMenu viewMenu = new javax.swing.JMenu("Вигляд");
+        javax.swing.JMenu viewMenu = new javax.swing.JMenu(messages.getString("menu.view"));
         
         // Пункт для перемикання теми
         javax.swing.JMenuItem toggleThemeItem = new javax.swing.JMenuItem(
                 themeManager.getCurrentTheme() == ThemeManager.Theme.DARK ? 
-                "Світла тема" : "Темна тема");
+                messages.getString("menu.theme") + ": " + "Світла тема" : 
+                messages.getString("menu.theme") + ": " + "Темна тема");
         toggleThemeItem.addActionListener(e -> {
             themeManager.toggleTheme();
             SwingUtilities.updateComponentTreeUI(this);
             toggleThemeItem.setText(
                     themeManager.getCurrentTheme() == ThemeManager.Theme.DARK ? 
-                    "Світла тема" : "Темна тема");
+                    messages.getString("menu.theme") + ": " + "Світла тема" : 
+                    messages.getString("menu.theme") + ": " + "Темна тема");
         });
         viewMenu.add(toggleThemeItem);
         
         // Підменю масштабу
-        javax.swing.JMenu scaleSubmenu = new javax.swing.JMenu("Масштаб");
+        javax.swing.JMenu scaleSubmenu = new javax.swing.JMenu(messages.getString("menu.scale"));
         
         // Додаємо пункти масштабу
-        String[] scaleLabels = {"Малий (80%)", "Середній (100%)", "Великий (120%)", "Дуже великий (150%)"};
+        String[] scaleLabels = {
+            messages.getString("scale.small"), 
+            messages.getString("scale.medium"), 
+            messages.getString("scale.large"), 
+            messages.getString("scale.extra_large")
+        };
         ThemeManager.UiScale[] scales = {
             ThemeManager.UiScale.SMALL,
             ThemeManager.UiScale.MEDIUM,
@@ -475,8 +482,12 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
             // Якщо користувач має права адміністратора, додаємо кнопку створення нової задачі
             if (currentUser.isAdmin()) {
                 JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-                JButton addIssueButton = new JButton("Створити задачу");
+                JButton addIssueButton = new JButton(messages.getString("issue.create"));
                 addIssueButton.addActionListener(e -> showCreateIssueDialog());
+                
+                // Застосовуємо стиль до кнопки
+                SwingHelper.applyButtonStyle(addIssueButton);
+                
                 controlPanel.add(addIssueButton);
                 
                 // Додаємо панель з кнопками в нижню частину дошки
@@ -550,23 +561,23 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
     }
     
     /**
-     * Загрузка задач на доску
+     * Завантаження задач на дошку
      */
     private void loadIssues(Board board) {
         try {
             System.out.println("MainFrame.loadIssues: завантажуємо задачі для дошки " + board.getName());
             System.out.println("MainFrame.loadIssues: розмір колекції колонок: " + columns.size());
             
-            // Очищаем все колонки перед загрузкой
+            // Очищаємо всі колонки перед завантаженням
             for (BoardColumnPanel column : columns.values()) {
                 column.clear();
             }
             
-            // Получаем задачи с сервиса вместо создания демо-задач
+            // Отримуємо задачі з сервісу замість створення демо-задач
             List<ua.oip.jiralite.domain.Issue> issues = boardService.getBoardIssues(board);
             System.out.println("MainFrame.loadIssues: отримано " + issues.size() + " задач");
             
-            // Обновляем панель поиска с новым списком задач
+            // Оновлюємо панель пошуку з новим списком задач
             if (searchPanel != null) {
                 System.out.println("MainFrame.loadIssues: оновлюємо панель пошуку");
                 searchPanel.setIssues(issues);
@@ -580,7 +591,7 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
                 }
             }
             
-            // Выводим весь список задач для отладки
+            // Виводимо весь список задач для відлагодження
             System.out.println("MainFrame.loadIssues: список всіх задач:");
             for (ua.oip.jiralite.domain.Issue issue : issues) {
                 System.out.println("  - Задача: ID=" + issue.getId() + 
@@ -589,13 +600,13 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
                     ", ключ=" + issue.getKey());
             }
             
-            // Распределяем задачи по колонкам в зависимости от статуса
+            // Розподіляємо задачі по колонках залежно від статусу
             for (ua.oip.jiralite.domain.Issue issue : issues) {
                 try {
-                    // Получаем статус задачи и соответствующую колонку
+                    // Отримуємо статус задачі та відповідну колонку
                     Status status = issue.getStatus();
                     
-                    // Если статус не задан, используем TO_DO
+                    // Якщо статус не задано, використовуємо TO_DO
                     if (status == null) {
                         System.out.println("MainFrame.loadIssues: задача " + issue.getTitle() + 
                             " не має статусу, встановлюю TO_DO");
@@ -603,12 +614,12 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
                         issue.setStatus(status);
                     }
                     
-                    // Получаем колонку для данного статуса
+                    // Отримуємо колонку для даного статусу
                     BoardColumnPanel column = columns.get(status);
                     
                     if (column != null) {
                         System.out.println("MainFrame.loadIssues: додаємо задачу " + issue.getTitle() + " до колонки " + status);
-                        // Добавляем задачу в колонку
+                        // Додаємо задачу в колонку
                         column.addIssue(issue, cardDragHandler);
                     } else {
                         System.out.println("MainFrame.loadIssues: колонка для статусу " + status + " не знайдена");
@@ -619,7 +630,7 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
                 }
             }
             
-            // Выводим количество компонентов в каждой колонке для отладки
+            // Виводимо кількість компонентів у кожній колонці для відлагодження
             for (Map.Entry<Status, BoardColumnPanel> entry : columns.entrySet()) {
                 JPanel cards = null;
                 for (Component comp : entry.getValue().getComponents()) {
@@ -838,6 +849,9 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
             // Запускаємо збирач сміття
             System.gc();
             
+            // Скидаємо флаг відкритого головного вікна в LoginFrame
+            LoginFrame.resetMainFrameOpened();
+            
             // Створюємо нове вікно логіну в потоці EDT
             SwingUtilities.invokeLater(() -> {
                 try {
@@ -856,6 +870,9 @@ public class MainFrame extends JFrame implements ProjectSelectionListener {
         } catch (Exception e) {
             System.err.println("Помилка при закритті вікон: " + e.getMessage());
             e.printStackTrace();
+            
+            // Скидаємо флаг відкритого головного вікна в LoginFrame
+            LoginFrame.resetMainFrameOpened();
             
             // Якщо все зовсім погано - просто створюємо нове вікно
             LoginFrame loginFrame = new LoginFrame(authService);

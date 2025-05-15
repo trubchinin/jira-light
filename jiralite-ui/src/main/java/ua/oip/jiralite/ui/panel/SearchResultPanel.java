@@ -63,7 +63,7 @@ public class SearchResultPanel extends JPanel {
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(themeManager.getCurrentScheme().border, 1),
-                "Результаты поиска",
+                messages.getString("search.results"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
                 UiConstants.SUBHEADER_FONT,
@@ -71,7 +71,7 @@ public class SearchResultPanel extends JPanel {
         
         // Панель с информацией о результатах
         JPanel infoPanel = new JPanel(new BorderLayout());
-        statusLabel = new JLabel("Нет результатов");
+        statusLabel = new JLabel(messages.getString("search.no_results"));
         infoPanel.add(statusLabel, BorderLayout.WEST);
         
         // Панель с результатами
@@ -116,7 +116,7 @@ public class SearchResultPanel extends JPanel {
         // Обновляем рамку панели
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(themeManager.getCurrentScheme().border, 1),
-                "Результаты поиска",
+                messages.getString("search.results"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
                 UiConstants.SUBHEADER_FONT,
@@ -167,14 +167,14 @@ public class SearchResultPanel extends JPanel {
         resultsContainer.removeAll();
         
         if (issues == null || issues.isEmpty()) {
-            statusLabel.setText("Нет результатов");
+            statusLabel.setText(messages.getString("search.no_results"));
             resultsContainer.revalidate();
             resultsContainer.repaint();
             return;
         }
         
         // Обновляем статусную метку
-        statusLabel.setText("Найдено задач: " + issues.size());
+        statusLabel.setText(java.text.MessageFormat.format(messages.getString("search.found_issues"), issues.size()));
         
         // Масштаб UI
         float scale = themeManager.getCurrentScale().getFactor();
@@ -283,9 +283,9 @@ public class SearchResultPanel extends JPanel {
         gbc.gridy = 2;
         gbc.gridwidth = 2;
         
-        String assigneeText = "Не назначено";
+        String assigneeText = messages.getString("issue.not_assigned");
         if (issue.getAssignee() != null) {
-            assigneeText = "Исполнитель: " + issue.getAssignee().getFullName();
+            assigneeText = messages.getString("issue.assignee") + ": " + issue.getAssignee().getFullName();
         }
         
         JLabel assigneeLabel = new JLabel(assigneeText);

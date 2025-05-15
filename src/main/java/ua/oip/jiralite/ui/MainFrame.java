@@ -223,13 +223,13 @@ public class MainFrame extends JFrame {
         notificationsPanel.setBorder(BorderFactory.createTitledBorder("Повідомлення"));
         notificationsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        JLabel systemNotificationsLabel = new JLabel("Системные уведомления");
+        JLabel systemNotificationsLabel = new JLabel("Системні сповіщення");
         systemNotificationsLabel.setHorizontalAlignment(SwingConstants.CENTER);
         notificationsPanel.add(systemNotificationsLabel, BorderLayout.NORTH);
 
         JPanel actualNotificationButtons = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        actualNotificationButtons.add(new JButton("Все"));
-        actualNotificationButtons.add(new JButton("Настройки"));
+        actualNotificationButtons.add(new JButton("Всі"));
+        actualNotificationButtons.add(new JButton("Налаштування"));
         notificationsPanel.add(actualNotificationButtons, BorderLayout.CENTER);
         notificationsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
         notificationsPanel.setPreferredSize(new Dimension(Short.MAX_VALUE, 80));
@@ -252,7 +252,7 @@ public class MainFrame extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
-        JLabel statusLabel = new JLabel("Ready");
+        JLabel statusLabel = new JLabel("Готово");
         panel.add(statusLabel, BorderLayout.WEST);
         
         return panel;
@@ -273,8 +273,8 @@ public class MainFrame extends JFrame {
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this,
-                    "Error loading projects: " + e.getMessage(),
-                    "Error",
+                    "Помилка завантаження проектів: " + e.getMessage(),
+                    "Помилка",
                     JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -298,14 +298,14 @@ public class MainFrame extends JFrame {
         descriptionArea.setEditable(false);
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
-        descriptionArea.setBorder(BorderFactory.createTitledBorder("Description"));
+        descriptionArea.setBorder(BorderFactory.createTitledBorder("Опис"));
         projectPanel.add(new JScrollPane(descriptionArea), BorderLayout.CENTER);
         
         // Панель действий проекта
         JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton viewBoardButton = new JButton("View Board");
-        JButton createIssueButton = new JButton("Create Issue");
-        JButton projectSettingsButton = new JButton("Project Settings");
+        JButton viewBoardButton = new JButton("Переглянути дошку");
+        JButton createIssueButton = new JButton("Створити задачу");
+        JButton projectSettingsButton = new JButton("Налаштування проекту");
         
         actionsPanel.add(viewBoardButton);
         actionsPanel.add(createIssueButton);
@@ -416,8 +416,8 @@ public class MainFrame extends JFrame {
     private void showCreateIssueDialog(Project project) {
         // TODO: Реализовать диалог создания задачи
         JOptionPane.showMessageDialog(this,
-            "Create issue dialog is not implemented yet",
-            "Not Implemented",
+            "Діалог створення задачі ще не реалізовано",
+            "Не реалізовано",
             JOptionPane.INFORMATION_MESSAGE);
     }
     

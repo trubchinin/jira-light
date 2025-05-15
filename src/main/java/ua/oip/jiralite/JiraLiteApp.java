@@ -24,37 +24,10 @@ public class JiraLiteApp {
     private static final Logger logger = LoggerFactory.getLogger(JiraLiteApp.class);
     
     public static void main(String[] args) {
-        logger.info("Запуск додатку Jira Lite");
+        logger.info("Цей клас більше не використовується. Використовуйте ua.oip.jiralite.ui.Launcher для запуску додатку.");
+        System.out.println("Цей клас більше не використовується. Використовуйте ua.oip.jiralite.ui.Launcher для запуску додатку.");
         
-        try {
-            // Ініціалізуємо EntityManagerFactory
-            EntityManagerFactory emf = Persistence.createEntityManagerFactory("jiralitePU");
-            logger.info("EntityManagerFactory створено успішно");
-            
-            // Створюємо репозиторії
-            UserRepository userRepository = new UserJpaRepository(emf);
-            ProjectRepository projectRepository = new ProjectJpaRepository(emf);
-            IssueRepository issueRepository = new IssueJpaRepository(emf);
-            
-            // Створюємо сервіси
-            AuthService authService = new AuthService(userRepository);
-            BoardService boardService = new BoardService(projectRepository, issueRepository, authService);
-            
-            // Запускаємо UI
-            LoginFrame loginFrame = new LoginFrame(authService);
-            loginFrame.setVisible(true);
-            
-            logger.info("Додаток успішно запущено");
-            
-            // Додаємо обробник для закриття EntityManagerFactory при завершенні додатку
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                logger.info("Закриття EntityManagerFactory");
-                emf.close();
-            }));
-            
-        } catch (Exception e) {
-            logger.error("Помилка при запуску додатку", e);
-            System.err.println("Помилка при запуску додатку: " + e.getMessage());
-        }
+        // Не запускаємо старий код для уникнення дублювання вікон
+        return;
     }
 } 

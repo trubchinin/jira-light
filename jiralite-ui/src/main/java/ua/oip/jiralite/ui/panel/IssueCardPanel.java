@@ -50,14 +50,14 @@ public final class IssueCardPanel extends JPanel implements Serializable {
     private static final int CORNER_RADIUS = 8;
     private static final int SHADOW_SIZE = 4;
     
-    // Отслеживаем первоначальный цвет фона для корректной работы ховера
+    // Відстежуємо первіначальний колір фону для коректної роботи ховера
     private Color initialBackgroundColor;
     
     /**
-     * Конструктор карточки задачи
+     * Конструктор карточки задачі
      * 
-     * @param issue модель задачи
-     * @param messages ресурсы локализации
+     * @param issue модель задачі
+     * @param messages ресурси локалізації
      */
     public IssueCardPanel(IssueCardModel issue, ResourceBundle messages) {
         this.issueModel = issue;
@@ -143,13 +143,15 @@ public final class IssueCardPanel extends JPanel implements Serializable {
         centerTopPanel.setOpaque(false);
         
         // Добавляем индикатор приоритета в верхнюю часть карточки
-        if (issueModel.getPriority() != null) {
-            System.out.println("IssueCardPanel: Создаем значок приоритета для " + issueModel.getKey() + ", приоритет: " + issueModel.getPriority());
-            JPanel priorityBadge = createPriorityBadge(issueModel.getPriority());
+        // Формируем мини-значок приоритета
+        Priority priority = issueModel.getPriority();
+        if (priority != null) {
+            System.out.println("IssueCardPanel: Створюємо значок пріоритету для " + issueModel.getKey() + ", пріоритет: " + issueModel.getPriority());
+            JPanel priorityBadge = createPriorityBadge(priority);
             centerTopPanel.add(priorityBadge);
             centerTopPanel.add(Box.createHorizontalGlue());
         } else {
-            System.out.println("IssueCardPanel: Приоритет для " + issueModel.getKey() + " не задан, используем значение по умолчанию");
+            System.out.println("IssueCardPanel: Пріоритет для " + issueModel.getKey() + " не задано, використовуємо значення за замовчуванням");
             // Если приоритет не задан, показываем значок с приоритетом MEDIUM
             JPanel priorityBadge = createPriorityBadge(Priority.MEDIUM);
             centerTopPanel.add(priorityBadge);
@@ -207,8 +209,9 @@ public final class IssueCardPanel extends JPanel implements Serializable {
         // Добавляем прослушиватель мыши к assigneeLabel
         addMouseProxyListenerToComponent(assigneeLabel);
         
-        // Устанавливаем текст назначенного пользователя
-        if (issueModel.getAssigneeName() != null && !issueModel.getAssigneeName().isEmpty()) {
+        // Встановлюємо текст призначеного користувача
+        if (issueModel.getAssigneeName() != null && !issueModel.getAssigneeName().isEmpty() &&
+            !issueModel.getAssigneeName().equals(messages.getString("issue.not_assigned"))) {
             assigneeLabel.setText(messages.getString("issue.assignee") + ": " + issueModel.getAssigneeName());
         } else {
             assigneeLabel.setText(messages.getString("issue.not_assigned"));
@@ -216,12 +219,20 @@ public final class IssueCardPanel extends JPanel implements Serializable {
         
         // Додаємо короткий опис задачі у вигляді JTextArea для кращого відображення
         final JTextArea descriptionTextArea;
-        // Отладочное сообщение
-        System.out.println("IssueCardPanel: Описание задачи " + issueModel.getKey() + ": " + 
-                          (issueModel.getDescription() != null ? issueModel.getDescription() : "отсутствует"));
+        
+        // Добавляем описание (если есть)
+        if (issueModel.getDescription() != null && !issueModel.getDescription().isEmpty()) {
+            String description = issueModel.getDescription();
+            // Обрезаем описание, если оно слишком длинное
+            if (description.length() > 50) {
+                description = description.substring(0, 47) + "...";
+            }
+            System.out.println("IssueCardPanel: Опис задачі " + issueModel.getKey() + ": " +
+                description);
+        }
         
         // Всегда создаем текстовое поле с описанием, даже если описание пустое
-        String shortDesc = "Без описания";
+        String shortDesc = messages.getString("issue.no_description");
         if (issueModel.getDescription() != null && !issueModel.getDescription().isEmpty()) {
             shortDesc = issueModel.getDescription();
             // Ограничиваем длину описания более строго, используя эллипсис в середине для очень длинных описаний
@@ -647,12 +658,12 @@ public final class IssueCardPanel extends JPanel implements Serializable {
      * Создает выразительный значок приоритета для размещения в верхней части карточки
      */
     private JPanel createPriorityBadge(Priority priority) {
-        System.out.println("IssueCardPanel: Создание значка приоритета: " + priority);
+        System.out.println("IssueCardPanel: Створення значка пріоритету: " + priority);
         
         JPanel badgePanel = new JPanel();
         badgePanel.setLayout(new BoxLayout(badgePanel, BoxLayout.X_AXIS));
         badgePanel.setOpaque(false);
-        badgePanel.setName("priorityBadge"); // Устанавливаем имя для последующего поиска
+        badgePanel.setName("priorityBadge"); // Встановлюємо ім'я для подальшого пошуку
         
         float scale = themeManager.getCurrentScale().getFactor();
         
@@ -671,7 +682,7 @@ public final class IssueCardPanel extends JPanel implements Serializable {
         priorityLabel.setFont(priorityLabel.getFont().deriveFont(Font.BOLD, 12f * scale));
         priorityLabel.setOpaque(true);
         
-        // Устанавливаем размер рамки в зависимости от масштаба
+        // Встановлюємо розмір рамки залежно від масштабу
         int borderSize = Math.max(1, (int)(1 * scale));
         int paddingTop = Math.max(2, (int)(4 * scale));
         int paddingLeft = Math.max(4, (int)(8 * scale));
@@ -680,7 +691,7 @@ public final class IssueCardPanel extends JPanel implements Serializable {
                 BorderFactory.createLineBorder(Color.BLACK, borderSize),
                 BorderFactory.createEmptyBorder(paddingTop, paddingLeft, paddingTop, paddingLeft)));
         
-        // Устанавливаем цвет фона и текста в зависимости от приоритета
+        // Встановлюємо колір фону та тексту залежно від пріоритету
         switch (priority) {
             case LOW:
                 priorityLabel.setBackground(new Color(76, 175, 80)); // Более яркий зеленый
@@ -763,7 +774,8 @@ public final class IssueCardPanel extends JPanel implements Serializable {
         }
         
         // Оновлюємо текст призначеного користувача
-        if (issueModel.getAssigneeName() != null && !issueModel.getAssigneeName().isEmpty()) {
+        if (issueModel.getAssigneeName() != null && !issueModel.getAssigneeName().isEmpty() &&
+            !issueModel.getAssigneeName().equals(messages.getString("issue.not_assigned"))) {
             assigneeLabel.setText(messages.getString("issue.assignee") + ": " + issueModel.getAssigneeName());
         } else {
             assigneeLabel.setText(messages.getString("issue.not_assigned"));

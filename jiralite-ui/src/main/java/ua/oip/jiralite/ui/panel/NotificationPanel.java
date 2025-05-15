@@ -38,15 +38,16 @@ import ua.oip.jiralite.domain.enums.Priority;
 import ua.oip.jiralite.domain.enums.Status;
 import ua.oip.jiralite.ui.util.ThemeManager;
 import ua.oip.jiralite.ui.util.UiConstants;
+import ua.oip.jiralite.ui.util.SwingHelper;
 
 /**
- * Панель системы уведомлений
+ * Панель системи сповіщень
  */
 public class NotificationPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     
-    // Константы для типов уведомлений
+    // Константи для типів сповіщень
     public enum NotificationType {
         ISSUE_CREATED,
         ISSUE_UPDATED,
@@ -56,14 +57,14 @@ public class NotificationPanel extends JPanel {
         GENERAL
     }
     
-    // Класс для представления уведомления
+    // Клас для представлення сповіщення
     public static class Notification {
         private String title;
         private String message;
         private NotificationType type;
         private LocalDateTime timestamp;
         private boolean isRead;
-        private Long referenceId; // ID задачи или другого объекта
+        private Long referenceId; // ID задачі або іншого об'єкту
         
         public Notification(String title, String message, NotificationType type) {
             this.title = title;
@@ -109,9 +110,9 @@ public class NotificationPanel extends JPanel {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
     
     /**
-     * Конструктор панели уведомлений
+     * Конструктор панелі сповіщень
      * 
-     * @param messages ресурсы локализации
+     * @param messages ресурси локалізації
      */
     public NotificationPanel(ResourceBundle messages) {
         this.messages = messages;
@@ -122,68 +123,68 @@ public class NotificationPanel extends JPanel {
         addThemeChangeListener();
         loadNotificationSettings();
         
-        // Добавляем демонстрационные уведомления
+        // Додаємо демонстраційні сповіщення
         addDemoNotifications();
     }
     
     /**
-     * Инициализация интерфейса панели уведомлений
+     * Ініціалізація інтерфейсу панелі сповіщень
      */
     private void initializeUI() {
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(themeManager.getCurrentScheme().border, 1),
-                "Уведомления",
+                "Сповіщення",
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
                 UiConstants.SUBHEADER_FONT,
                 themeManager.getCurrentScheme().textPrimary));
         
-        // Панель с заголовком и счетчиком
+        // Панель з заголовком і лічильником
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
-        JLabel titleLabel = new JLabel("Системные уведомления");
+        JLabel titleLabel = new JLabel("Системні сповіщення");
         titleLabel.setFont(UiConstants.SUBHEADER_FONT);
         
-        countLabel = new JLabel("0 новых");
+        countLabel = new JLabel("0 нових");
         countLabel.setForeground(themeManager.getCurrentScheme().info);
         
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(countLabel, BorderLayout.EAST);
         
-        // Создаем табличные вкладки
+        // Створюємо табличні вкладки
         tabbedPane = new JTabbedPane();
         
-        // Вкладка "Все уведомления"
+        // Вкладка "Всі сповіщення"
         JPanel allNotificationsPanel = createNotificationsListPanel();
-        tabbedPane.addTab("Все", allNotificationsPanel);
+        tabbedPane.addTab("Всі", allNotificationsPanel);
         
-        // Вкладка "Настройки"
+        // Вкладка "Налаштування"
         JPanel settingsPanel = createSettingsPanel();
-        tabbedPane.addTab("Настройки", settingsPanel);
+        tabbedPane.addTab("Налаштування", settingsPanel);
         
-        // Основная панель
+        // Основна панель
         add(headerPanel, BorderLayout.NORTH);
         add(tabbedPane, BorderLayout.CENTER);
         
-        // Применяем текущую тему
+        // Застосовуємо поточну тему
         applyTheme();
     }
     
     /**
-     * Создает панель со списком уведомлений
+     * Створює панель зі списком сповіщень
      */
     private JPanel createNotificationsListPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // Создаем модель и список уведомлений
+        // Створюємо модель і список сповіщень
         notificationModel = new DefaultListModel<>();
         notificationList = new JList<>(notificationModel);
         notificationList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         
-        // Настраиваем отображение элементов списка
+        // Налаштовуємо відображення елементів списку
         notificationList.setCellRenderer(new javax.swing.DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, 
@@ -197,7 +198,7 @@ public class NotificationPanel extends JPanel {
                 if (value instanceof Notification) {
                     Notification notification = (Notification) value;
                     
-                    // Заголовок и время
+                    // Заголовок і час
                     JPanel headerPanel = new JPanel(new BorderLayout());
                     headerPanel.setOpaque(false);
                     
@@ -215,23 +216,23 @@ public class NotificationPanel extends JPanel {
                     headerPanel.add(titleLabel, BorderLayout.WEST);
                     headerPanel.add(timeLabel, BorderLayout.EAST);
                     
-                    // Текст сообщения
+                    // Текст повідомлення
                     JLabel messageLabel = new JLabel("<html>" + notification.getMessage() + "</html>");
                     messageLabel.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0));
                     
-                    // Тип уведомления (иконка или текст)
+                    // Тип сповіщення (іконка або текст)
                     String typeText = getNotificationTypeText(notification.getType());
                     JLabel typeLabel = new JLabel(typeText);
                     typeLabel.setForeground(getNotificationTypeColor(notification.getType()));
                     typeLabel.setFont(typeLabel.getFont().deriveFont(10f));
                     typeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
                     
-                    // Добавление компонентов на панель
+                    // Додавання компонентів на панель
                     panel.add(headerPanel, BorderLayout.NORTH);
                     panel.add(messageLabel, BorderLayout.CENTER);
                     panel.add(typeLabel, BorderLayout.SOUTH);
                     
-                    // При выделении меняем цвет
+                    // При виділенні змінюємо колір
                     if (isSelected) {
                         panel.setBackground(list.getSelectionBackground());
                         messageLabel.setForeground(list.getSelectionForeground());
@@ -245,7 +246,7 @@ public class NotificationPanel extends JPanel {
             }
         });
         
-        // Добавляем обработчик клика по уведомлению
+        // Додаємо обробник кліку по сповіщенню
         notificationList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -261,16 +262,16 @@ public class NotificationPanel extends JPanel {
             }
         });
         
-        // Помещаем список в скроллируемую панель
+        // Поміщаємо список у панель з прокруткою
         JScrollPane scrollPane = new JScrollPane(notificationList);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         
-        // Панель с кнопками
+        // Панель з кнопками
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
         buttonsPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         
-        JButton markAllReadButton = new JButton("Отметить все как прочитанные");
+        JButton markAllReadButton = new JButton("Позначити всі як прочитані");
         markAllReadButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -278,7 +279,7 @@ public class NotificationPanel extends JPanel {
             }
         });
         
-        JButton clearAllButton = new JButton("Очистить все");
+        JButton clearAllButton = new JButton("Очистити всі");
         clearAllButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -286,12 +287,16 @@ public class NotificationPanel extends JPanel {
             }
         });
         
+        // Застосовуємо стиль до кнопок
+        SwingHelper.applyButtonStyle(markAllReadButton);
+        SwingHelper.applyButtonStyle(clearAllButton);
+        
         buttonsPanel.add(Box.createHorizontalGlue());
         buttonsPanel.add(markAllReadButton);
         buttonsPanel.add(Box.createHorizontalStrut(10));
         buttonsPanel.add(clearAllButton);
         
-        // Добавляем компоненты на панель
+        // Додаємо компоненти на панель
         panel.add(scrollPane, BorderLayout.CENTER);
         panel.add(buttonsPanel, BorderLayout.SOUTH);
         
@@ -299,35 +304,35 @@ public class NotificationPanel extends JPanel {
     }
     
     /**
-     * Создает панель настроек уведомлений
+     * Створює панель налаштувань сповіщень
      */
     private JPanel createSettingsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         // Заголовок
-        JLabel titleLabel = new JLabel("Настройки уведомлений");
+        JLabel titleLabel = new JLabel("Налаштування сповіщень");
         titleLabel.setFont(UiConstants.SUBHEADER_FONT);
         
-        // Флажки для типов уведомлений
+        // Прапорці для типів сповіщень
         JPanel checkboxPanel = new JPanel(new GridLayout(0, 1, 0, 5));
         settingsCheckboxes = new ArrayList<>();
         
-        // Создаем флажки для каждого типа уведомлений
-        JCheckBox issueCreatedCheckbox = new JCheckBox("Уведомлять о создании новых задач", 
+        // Створюємо прапорці для кожного типу сповіщень
+        JCheckBox issueCreatedCheckbox = new JCheckBox("Сповіщати про створення нових задач", 
                 prefs.getBoolean("notify.ISSUE_CREATED", true));
-        JCheckBox issueUpdatedCheckbox = new JCheckBox("Уведомлять об обновлении задач", 
+        JCheckBox issueUpdatedCheckbox = new JCheckBox("Сповіщати про оновлення задач", 
                 prefs.getBoolean("notify.ISSUE_UPDATED", true));
-        JCheckBox issueAssignedCheckbox = new JCheckBox("Уведомлять о назначении задач", 
+        JCheckBox issueAssignedCheckbox = new JCheckBox("Сповіщати про призначення задач", 
                 prefs.getBoolean("notify.ISSUE_ASSIGNED", true));
-        JCheckBox statusChangedCheckbox = new JCheckBox("Уведомлять об изменении статуса задач", 
+        JCheckBox statusChangedCheckbox = new JCheckBox("Сповіщати про зміну статусу задач", 
                 prefs.getBoolean("notify.STATUS_CHANGED", true));
-        JCheckBox commentAddedCheckbox = new JCheckBox("Уведомлять о новых комментариях", 
+        JCheckBox commentAddedCheckbox = new JCheckBox("Сповіщати про нові коментарі", 
                 prefs.getBoolean("notify.COMMENT_ADDED", true));
-        JCheckBox generalCheckbox = new JCheckBox("Системные уведомления", 
+        JCheckBox generalCheckbox = new JCheckBox("Системні сповіщення", 
                 prefs.getBoolean("notify.GENERAL", true));
         
-        // Добавляем флажки в список и на панель
+        // Додаємо прапорці в список і на панель
         settingsCheckboxes.add(issueCreatedCheckbox);
         settingsCheckboxes.add(issueUpdatedCheckbox);
         settingsCheckboxes.add(issueAssignedCheckbox);
@@ -338,7 +343,7 @@ public class NotificationPanel extends JPanel {
         for (JCheckBox checkbox : settingsCheckboxes) {
             checkboxPanel.add(checkbox);
             
-            // Добавляем обработчик для сохранения настроек
+            // Додаємо обробник для збереження налаштувань
             checkbox.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -347,8 +352,8 @@ public class NotificationPanel extends JPanel {
             });
         }
         
-        // Кнопка "Сохранить настройки"
-        JButton saveButton = new JButton("Сохранить настройки");
+        // Кнопка "Зберегти налаштування"
+        JButton saveButton = new JButton("Зберегти налаштування");
         saveButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -360,7 +365,7 @@ public class NotificationPanel extends JPanel {
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         buttonPanel.add(saveButton, BorderLayout.EAST);
         
-        // Добавляем компоненты на панель
+        // Додаємо компоненти на панель
         panel.add(titleLabel, BorderLayout.NORTH);
         panel.add(checkboxPanel, BorderLayout.CENTER);
         panel.add(buttonPanel, BorderLayout.SOUTH);
@@ -369,7 +374,7 @@ public class NotificationPanel extends JPanel {
     }
     
     /**
-     * Добавляет слушателя изменения темы
+     * Додає слухача зміни теми
      */
     private void addThemeChangeListener() {
         themeManager.addThemeChangeListener(new ThemeManager.ThemeChangeListener() {
@@ -381,10 +386,10 @@ public class NotificationPanel extends JPanel {
     }
     
     /**
-     * Применяет текущую тему к компонентам
+     * Застосовує поточну тему до компонентів
      */
     private void applyTheme() {
-        // Обновляем цвета и шрифты
+        // Оновлюємо кольори та шрифти
         setBackground(themeManager.getCurrentScheme().background);
         
         if (tabbedPane != null) {
@@ -404,33 +409,33 @@ public class NotificationPanel extends JPanel {
             }
         }
         
-        // Обновляем рамку панели
+        // Оновлюємо рамку панелі
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(themeManager.getCurrentScheme().border, 1),
-                "Уведомления",
+                "Сповіщення",
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
                 UiConstants.SUBHEADER_FONT,
                 themeManager.getCurrentScheme().textPrimary));
         
-        // Обновляем масштаб
+        // Оновлюємо масштаб
         float scale = themeManager.getCurrentScale().getFactor();
         
-        // Обновляем шрифты
+        // Оновлюємо шрифти
         countLabel.setFont(UiConstants.DEFAULT_FONT.deriveFont(UiConstants.DEFAULT_FONT.getSize() * scale));
         
-        // Обновляем отрисовку
+        // Оновлюємо відрисовку
         revalidate();
         repaint();
     }
     
     /**
-     * Добавляет новое уведомление
+     * Додає нове сповіщення
      * 
-     * @param notification объект уведомления
+     * @param notification об'єкт сповіщення
      */
     public void addNotification(Notification notification) {
-        // Проверяем настройки для этого типа уведомлений
+        // Перевіряємо налаштування для цього типу сповіщень
         if (isNotificationTypeEnabled(notification.getType())) {
             notificationModel.add(0, notification);
             updateUnreadCount();
@@ -438,36 +443,36 @@ public class NotificationPanel extends JPanel {
     }
     
     /**
-     * Добавляет демонстрационные уведомления
+     * Додає демонстраційні сповіщення
      */
     private void addDemoNotifications() {
-        // Демо-уведомления для разных типов
+        // Демо-сповіщення для різних типів
         Notification notification1 = new Notification(
-                "Новая задача создана", 
-                "Задача DEMO-7 'Тестирование системы уведомлений' была создана пользователем 'Administrator'", 
+                "Нову задачу створено", 
+                "Задачу DEMO-7 'Тестування системи сповіщень' було створено користувачем 'Administrator'", 
                 NotificationType.ISSUE_CREATED, 7L);
         
         Notification notification2 = new Notification(
-                "Изменен статус задачи", 
-                "Задача DEMO-2 'Разработка UI' перемещена в статус 'Done'", 
+                "Змінено статус задачі", 
+                "Задачу DEMO-2 'Розробка UI' переміщено у статус 'Done'", 
                 NotificationType.STATUS_CHANGED, 2L);
         
         Notification notification3 = new Notification(
-                "Вы назначены исполнителем", 
-                "Вы были назначены исполнителем задачи DEMO-4 'Улучшение безопасности'", 
+                "Вас призначено виконавцем", 
+                "Вас було призначено виконавцем задачі DEMO-4 'Покращення безпеки'", 
                 NotificationType.ISSUE_ASSIGNED, 4L);
         
-        // Добавляем уведомления в список
+        // Додаємо сповіщення у список
         notificationModel.add(0, notification1);
         notificationModel.add(0, notification2);
         notificationModel.add(0, notification3);
         
-        // Обновляем счетчик непрочитанных
+        // Оновлюємо лічильник непрочитаних
         updateUnreadCount();
     }
     
     /**
-     * Обновляет счетчик непрочитанных уведомлений
+     * Оновлює лічильник непрочитаних сповіщень
      */
     private void updateUnreadCount() {
         int unreadCount = 0;
@@ -478,9 +483,9 @@ public class NotificationPanel extends JPanel {
             }
         }
         
-        countLabel.setText(unreadCount + " новых");
+        countLabel.setText(unreadCount + " нових");
         
-        // Обновляем внешний вид счетчика
+        // Оновлюємо зовнішній вигляд лічильника
         if (unreadCount > 0) {
             countLabel.setForeground(themeManager.getCurrentScheme().danger);
             countLabel.setFont(countLabel.getFont().deriveFont(Font.BOLD));
@@ -491,7 +496,7 @@ public class NotificationPanel extends JPanel {
     }
     
     /**
-     * Отмечает все уведомления как прочитанные
+     * Позначає всі сповіщення як прочитані
      */
     private void markAllNotificationsAsRead() {
         for (int i = 0; i < notificationModel.getSize(); i++) {
@@ -504,7 +509,7 @@ public class NotificationPanel extends JPanel {
     }
     
     /**
-     * Очищает все уведомления
+     * Очищає всі сповіщення
      */
     private void clearAllNotifications() {
         notificationModel.clear();
@@ -512,7 +517,7 @@ public class NotificationPanel extends JPanel {
     }
     
     /**
-     * Сохраняет настройки уведомлений
+     * Зберігає налаштування сповіщень
      */
     private void saveNotificationSettings() {
         if (settingsCheckboxes != null) {
@@ -528,7 +533,7 @@ public class NotificationPanel extends JPanel {
     }
     
     /**
-     * Загружает настройки уведомлений
+     * Завантажує налаштування сповіщень
      */
     private void loadNotificationSettings() {
         if (settingsCheckboxes != null) {
@@ -544,47 +549,47 @@ public class NotificationPanel extends JPanel {
     }
     
     /**
-     * Проверяет, включены ли уведомления указанного типа
+     * Перевіряє, чи увімкнені сповіщення вказаного типу
      * 
-     * @param type тип уведомления
-     * @return true, если уведомления этого типа включены
+     * @param type тип сповіщення
+     * @return true, якщо сповіщення цього типу увімкнені
      */
     private boolean isNotificationTypeEnabled(NotificationType type) {
         return prefs.getBoolean("notify." + type.name(), true);
     }
     
     /**
-     * Возвращает текстовое представление типа уведомления
+     * Повертає текстове представлення типу сповіщення
      * 
-     * @param type тип уведомления
-     * @return текстовое представление
+     * @param type тип сповіщення
+     * @return текстове представлення
      */
     private String getNotificationTypeText(NotificationType type) {
         switch (type) {
-            case ISSUE_CREATED: return "Создание задачи";
-            case ISSUE_UPDATED: return "Обновление задачи";
-            case ISSUE_ASSIGNED: return "Назначение исполнителя";
-            case STATUS_CHANGED: return "Изменение статуса";
-            case COMMENT_ADDED: return "Новый комментарий";
-            case GENERAL: return "Системное уведомление";
+            case ISSUE_CREATED: return "Створення задачі";
+            case ISSUE_UPDATED: return "Оновлення задачі";
+            case ISSUE_ASSIGNED: return "Призначення виконавця";
+            case STATUS_CHANGED: return "Зміна статусу";
+            case COMMENT_ADDED: return "Новий коментар";
+            case GENERAL: return "Системне сповіщення";
             default: return "";
         }
     }
     
     /**
-     * Возвращает цвет для типа уведомления
+     * Повертає колір для типу сповіщення
      * 
-     * @param type тип уведомления
-     * @return цвет
+     * @param type тип сповіщення
+     * @return колір
      */
     private Color getNotificationTypeColor(NotificationType type) {
         switch (type) {
-            case ISSUE_CREATED: return new Color(46, 204, 113); // Зеленый
-            case ISSUE_UPDATED: return new Color(52, 152, 219); // Синий
-            case ISSUE_ASSIGNED: return new Color(155, 89, 182); // Фиолетовый
-            case STATUS_CHANGED: return new Color(241, 196, 15); // Желтый
-            case COMMENT_ADDED: return new Color(230, 126, 34); // Оранжевый
-            case GENERAL: return new Color(149, 165, 166); // Серый
+            case ISSUE_CREATED: return new Color(46, 204, 113); // Зелений
+            case ISSUE_UPDATED: return new Color(52, 152, 219); // Синій
+            case ISSUE_ASSIGNED: return new Color(155, 89, 182); // Фіолетовий
+            case STATUS_CHANGED: return new Color(241, 196, 15); // Жовтий
+            case COMMENT_ADDED: return new Color(230, 126, 34); // Оранжевий
+            case GENERAL: return new Color(149, 165, 166); // Сірий
             default: return Color.GRAY;
         }
     }

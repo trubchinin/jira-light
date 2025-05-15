@@ -16,17 +16,17 @@ import javax.swing.SwingConstants;
 import ua.oip.jiralite.ui.util.SwingHelper;
 
 /**
- * Диалог "О программе"
+ * Діалог "Про програму"
  */
 public class AboutDialog extends JDialog {
     
     private final ResourceBundle messages;
     
     /**
-     * Конструктор диалога
+     * Конструктор діалогу
      * 
-     * @param parent родительское окно
-     * @param messages ресурсы локализации
+     * @param parent батьківське вікно
+     * @param messages ресурси локалізації
      */
     public AboutDialog(JFrame parent, ResourceBundle messages) {
         super(parent, true);
@@ -36,7 +36,7 @@ public class AboutDialog extends JDialog {
     }
     
     /**
-     * Инициализация интерфейса
+     * Ініціалізація інтерфейсу
      */
     private void initializeUI() {
         setTitle(messages.getString("about.title"));
@@ -52,7 +52,7 @@ public class AboutDialog extends JDialog {
         titleLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 24));
         mainPanel.add(titleLabel, BorderLayout.NORTH);
         
-        // Описание
+        // Опис
         JTextArea descriptionArea = new JTextArea(messages.getString("about.description"));
         descriptionArea.setEditable(false);
         descriptionArea.setLineWrap(true);
@@ -62,7 +62,7 @@ public class AboutDialog extends JDialog {
         descriptionArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainPanel.add(descriptionArea, BorderLayout.CENTER);
         
-        // Кнопка закрытия
+        // Кнопка закриття
         JButton closeButton = SwingHelper.createButton(
                 messages.getString("app.close"),
                 e -> dispose());

@@ -21,6 +21,7 @@ import ua.oip.jiralite.domain.Board;
 import ua.oip.jiralite.domain.Project;
 import ua.oip.jiralite.domain.User;
 import ua.oip.jiralite.service.BoardService;
+import ua.oip.jiralite.ui.util.SwingHelper;
 import ua.oip.jiralite.ui.util.UiConstants;
 
 /**
@@ -30,7 +31,7 @@ import ua.oip.jiralite.ui.util.UiConstants;
 public final class ProjectTreePanel extends JPanel {
     
     /**
-     * Интерфейс для обработки событий выбора проекта и доски
+     * Інтерфейс для обробки подій вибору проєкту та дошки
      */
     public interface ProjectSelectionListener {
         void onProjectSelected(Project project);
@@ -109,8 +110,12 @@ public final class ProjectTreePanel extends JPanel {
             
             // Додаємо кнопку оновлення для тестування
             JPanel buttonPanel = new JPanel();
-            JButton refreshButton = new JButton("Оновити");
+            JButton refreshButton = new JButton(messages.getString("app.refresh"));
             refreshButton.addActionListener(e -> loadProjects());
+            
+            // Застосовуємо стиль до кнопки
+            SwingHelper.applyButtonStyle(refreshButton);
+            
             buttonPanel.add(refreshButton);
             add(buttonPanel, BorderLayout.SOUTH);
             
@@ -128,7 +133,7 @@ public final class ProjectTreePanel extends JPanel {
     }
     
     /**
-     * Установка обработчика выбора проекта/доски
+     * Встановлення обробника вибору проєкту/дошки
      */
     public void setSelectionListener(ProjectSelectionListener listener) {
         this.selectionListener = listener;

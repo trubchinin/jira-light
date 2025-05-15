@@ -112,6 +112,11 @@ public class SettingsDialog extends JDialog {
             dispose();
         });
         
+        // Застосовуємо стиль до кнопок
+        SwingHelper.applyButtonStyle(cancelButton);
+        SwingHelper.applyButtonStyle(applyButton);
+        SwingHelper.applyButtonStyle(okButton);
+        
         buttonPanel.add(cancelButton);
         buttonPanel.add(applyButton);
         buttonPanel.add(okButton);

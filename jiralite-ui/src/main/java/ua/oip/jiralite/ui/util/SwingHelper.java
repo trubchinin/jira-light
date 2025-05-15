@@ -3,6 +3,8 @@ package ua.oip.jiralite.ui.util;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionListener;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -14,28 +16,31 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 /**
- * Вспомогательный класс для работы со Swing компонентами
+ * Допоміжний клас для роботи зі Swing компонентами
  */
 public final class SwingHelper {
     
     private SwingHelper() {
-        // Utility class, не позволяем создавать экземпляры
+        // Utility class, не дозволяємо створювати екземпляри
     }
     
     /**
-     * Показывает сообщение об ошибке
+     * Показує повідомлення про помилку
      */
     public static void showError(Component parent, String message) {
+        // Отримання ресурсів локалізації
+        ResourceBundle messages = ResourceBundle.getBundle("i18n.labels", new Locale("uk", "UA"));
+        
         JOptionPane.showMessageDialog(
                 parent,
                 message,
-                "Помилка",
+                messages.getString("app.error"),
                 JOptionPane.ERROR_MESSAGE
         );
     }
     
     /**
-     * Показывает диалог ошибки
+     * Показує діалог помилки
      */
     public static void showErrorDialog(Component parent, String title, String message) {
         JOptionPane.showMessageDialog(
@@ -47,7 +52,7 @@ public final class SwingHelper {
     }
     
     /**
-     * Показывает информационное сообщение
+     * Показує інформаційне повідомлення
      */
     public static void showInfoDialog(Component parent, String title, String message) {
         JOptionPane.showMessageDialog(
@@ -59,7 +64,7 @@ public final class SwingHelper {
     }
     
     /**
-     * Показывает диалог подтверждения
+     * Показує діалог підтвердження
      */
     public static boolean showConfirmDialog(Component parent, String title, String message) {
         int result = JOptionPane.showConfirmDialog(
@@ -73,18 +78,45 @@ public final class SwingHelper {
     }
     
     /**
-     * Создает кнопку с текстом и обработчиком
+     * Створює кнопку з текстом та обробником
      */
     public static JButton createButton(String text, ActionListener listener) {
         JButton button = new JButton(text);
         if (listener != null) {
             button.addActionListener(listener);
         }
+        // Застосовуємо стиль до кнопки
+        applyButtonStyle(button);
         return button;
     }
     
     /**
-     * Создает панель с заголовком
+     * Застосовує єдиний стиль до кнопки (синій фон з білим текстом)
+     * 
+     * @param button кнопка для стилізації
+     */
+    public static void applyButtonStyle(JButton button) {
+        if (button == null) return;
+        
+        // Отримуємо менеджер тем для використання акцентного кольору
+        ThemeManager themeManager = ThemeManager.getInstance();
+        
+        // Встановлюємо стиль кнопки
+        button.setBackground(themeManager.getCurrentScheme().accentColor);
+        button.setForeground(java.awt.Color.WHITE);
+        button.setOpaque(true);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        
+        // Додаємо слухач зміни теми для оновлення кольору
+        themeManager.addThemeChangeListener(() -> {
+            button.setBackground(themeManager.getCurrentScheme().accentColor);
+            button.setForeground(java.awt.Color.WHITE);
+        });
+    }
+    
+    /**
+     * Створює панель з заголовком
      */
     public static JPanel createTitledPanel(String title) {
         JPanel panel = new JPanel();

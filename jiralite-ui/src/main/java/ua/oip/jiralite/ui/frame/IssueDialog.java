@@ -415,8 +415,9 @@ public class IssueDialog extends JDialog {
             issueModel.setAssigneeName(fullName);
             System.out.println("IssueDialog.saveIssue: Встановлено assigneeName = " + fullName);
         } else {
-            issueModel.setAssigneeName(null);
-            System.out.println("IssueDialog.saveIssue: Виконавця не вибрано (null)");
+            // Замість null встановлюємо рядок "не призначено"
+            issueModel.setAssigneeName(messages.getString("issue.not_assigned"));
+            System.out.println("IssueDialog.saveIssue: Встановлено 'не призначено' для неназначеного виконавця");
         }
         
         // Перевіряємо, що опис було коректно встановлено в модель
@@ -484,6 +485,9 @@ public class IssueDialog extends JDialog {
                     if (assignee != null) {
                         createdIssue.setAssignee(assignee);
                         System.out.println("IssueDialog.saveIssue: встановлено виконавця " + assignee.getFullName());
+                        
+                        // Додатково встановлюємо ім'я користувача в модель для коректного відображення
+                        issueModel.setAssigneeName(assignee.getFullName());
                     }
                     
                     // Зберігаємо задачу з усіма властивостями в глобальному списку
