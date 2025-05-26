@@ -81,22 +81,22 @@ class BoardServiceTest {
     
     @Test
     void getUserProjects() {
-        // Вызываем тестируемый метод
+        // Викликаємо тестований метод
         List<Project> projects = boardService.getUserProjects();
         
-        // Проверяем результат
+        // Перевіряємо результат
         assertNotNull(projects);
         assertEquals(1, projects.size());
         assertEquals(project, projects.get(0));
         
-        // Проверяем, что вызваны нужные методы
+        // Перевіряємо, що викликані необхідні методи
         verify(authService, times(1)).getCurrentUser();
         verify(projectRepository, times(1)).findByMembersContaining(currentUser);
     }
     
     @Test
     void createProject() {
-        // Подготавливаем тестовые данные
+        // Готуємо тестові дані
         String name = "New Project";
         String key = "NEW";
         String description = "New project description";
