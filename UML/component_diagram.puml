@@ -1,0 +1,91 @@
+@startuml component_diagram
+!theme blueprint
+
+title Діаграма компонентів JiraLite
+
+package "Presentation Layer" {
+  [Swing UI] as UI
+  [Login Frame] as LoginFrame
+  [Main Frame] as MainFrame
+  [Issue Dialog] as IssueDialog
+  [Settings Dialog] as SettingsDialog
+}
+
+package "Service Layer" {
+  [Auth Service] as AuthService
+  [Board Service] as BoardService
+  [Issue Service] as IssueService
+  [User Service] as UserService
+}
+
+package "Repository Layer" {
+  [User Repository] as UserRepo
+  [Issue Repository] as IssueRepo
+  [Project Repository] as ProjectRepo
+  [Board Repository] as BoardRepo
+}
+
+package "Domain Model" {
+  [User] as UserEntity
+  [Issue] as IssueEntity
+  [Project] as ProjectEntity
+  [Board] as BoardEntity
+  [Comment] as CommentEntity
+}
+
+package "REST API" {
+  [Health Controller] as HealthController
+  [Issue Controller] as IssueController
+  [Spring Boot App] as SpringApp
+}
+
+package "Data Layer" {
+  database "In-Memory Storage" as Memory {
+    [ConcurrentHashMap]
+  }
+  
+  database "File System" as FS {
+    [Configuration Files]
+    [Localization Files]
+  }
+}
+
+' UI Layer connections
+UI --> AuthService
+UI --> BoardService
+UI --> IssueService
+
+LoginFrame --> AuthService
+MainFrame --> BoardService
+MainFrame --> IssueService
+IssueDialog --> IssueService
+SettingsDialog --> UserService
+
+' Service Layer connections
+AuthService --> UserRepo
+BoardService --> BoardRepo
+BoardService --> IssueRepo
+IssueService --> IssueRepo
+UserService --> UserRepo
+
+' Repository connections
+UserRepo --> UserEntity
+IssueRepo --> IssueEntity
+ProjectRepo --> ProjectEntity
+BoardRepo --> BoardEntity
+
+' REST API connections
+SpringApp --> HealthController
+SpringApp --> IssueController
+IssueController --> IssueService
+
+' Data connections
+UserRepo --> Memory
+IssueRepo --> Memory
+ProjectRepo --> Memory
+BoardRepo --> Memory
+
+UI --> FS
+SpringApp --> Memory
+
+@enduml 

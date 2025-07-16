@@ -1,0 +1,107 @@
+@startuml class_diagram
+!theme blueprint
+
+title Діаграма класів JiraLite Domain Model
+
+package "Domain Model" {
+  
+  class User {
+    - Long id
+    - String username
+    - String email
+    - String password
+    - Role role
+    + login()
+    + logout()
+    + hasPermission()
+  }
+  
+  class Project {
+    - Long id
+    - String name
+    - String description
+    - String key
+    - User owner
+    - List<Board> boards
+    + createBoard()
+    + addMember()
+  }
+  
+  class Board {
+    - Long id
+    - String name
+    - Project project
+    - List<BoardColumn> columns
+    + addColumn()
+    + moveIssue()
+  }
+  
+  class BoardColumn {
+    - Long id
+    - String name
+    - Status status
+    - Integer order
+    - List<Issue> issues
+  }
+  
+  class Issue {
+    - Long id
+    - String title
+    - String description
+    - Priority priority
+    - Status status
+    - User assignee
+    - User reporter
+    - Project project
+    - LocalDateTime createdAt
+    - LocalDateTime updatedAt
+    + changeStatus()
+    + assign()
+    + addComment()
+  }
+  
+  class Comment {
+    - Long id
+    - String content
+    - User author
+    - Issue issue
+    - LocalDateTime createdAt
+  }
+  
+  enum Priority {
+    LOW
+    MEDIUM
+    HIGH
+    CRITICAL
+  }
+  
+  enum Status {
+    OPEN
+    IN_PROGRESS
+    IN_REVIEW
+    DONE
+    CLOSED
+  }
+  
+  enum Role {
+    ADMIN
+    PROJECT_MANAGER
+    DEVELOPER
+    VIEWER
+  }
+}
+
+' Relationships
+User ||--o{ Project : owns
+Project ||--o{ Board : contains
+Board ||--o{ BoardColumn : has
+BoardColumn ||--o{ Issue : contains
+Issue }o--|| User : assigned_to
+Issue }o--|| User : reported_by
+Issue ||--o{ Comment : has
+Comment }o--|| User : authored_by
+Issue }o--|| Priority : has
+Issue }o--|| Status : has
+User }o--|| Role : has
+
+@enduml 

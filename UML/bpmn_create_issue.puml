@@ -1,0 +1,27 @@
+@startuml bpmn_create_issue
+!theme blueprint
+
+title Процес створення задачі (BPMN)
+
+|Client (UI)|
+start
+:Відкрити форму "Create Issue";
+:Заповнити поля задачі;
+:Натиснути "Submit";
+:Відправити POST /api/issue;
+
+|Server (REST API)|
+:Отримати запит;
+:Валідувати дані;
+if (Дані валідні?) then (так)
+  :Зберегти задачу в репозиторії;
+  :Повернути 201 Created (JSON);
+else (ні)
+  :Повернути 400 Bad Request;
+endif
+
+|Client (UI)|
+:Показати результат;
+stop
+
+@enduml

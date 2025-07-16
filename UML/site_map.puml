@@ -1,0 +1,15 @@
+@startmindmap site_map
+* Dashboard
+** Board
+*** Column – To Do
+*** Column – In Progress
+*** Column – Done
+*** Issue Details
+** Projects
+*** Project List
+*** Project Settings
+** Login
+** Settings
+*** Profile
+*** Language / Theme
+@endmindmap

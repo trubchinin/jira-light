@@ -1,0 +1,127 @@
+@startuml use_case_diagram
+!theme blueprint
+
+title Діаграма прецедентів JiraLite
+
+left to right direction
+
+actor "Адміністратор" as Admin
+actor "Менеджер проекту" as PM  
+actor "Розробник" as Dev
+actor "Спостерігач" as Viewer
+
+rectangle "JiraLite System" {
+  
+  package "Управління користувачами" {
+    usecase "Авторизація" as UC1
+    usecase "Створити користувача" as UC2
+    usecase "Видалити користувача" as UC3
+    usecase "Змінити роль" as UC4
+    usecase "Переглянути профіль" as UC5
+  }
+  
+  package "Управління проектами" {
+    usecase "Створити проект" as UC6
+    usecase "Редагувати проект" as UC7
+    usecase "Видалити проект" as UC8
+    usecase "Переглянути проекти" as UC9
+    usecase "Додати учасника" as UC10
+  }
+  
+  package "Управління дошками" {
+    usecase "Створити дошку" as UC11
+    usecase "Налаштувати колонки" as UC12
+    usecase "Переглянути дошку" as UC13
+  }
+  
+  package "Управління задачами" {
+    usecase "Створити задачу" as UC14
+    usecase "Редагувати задачу" as UC15
+    usecase "Видалити задачу" as UC16
+    usecase "Змінити статус" as UC17
+    usecase "Призначити виконавця" as UC18
+    usecase "Додати коментар" as UC19
+    usecase "Пошук задач" as UC20
+  }
+  
+  package "Налаштування" {
+    usecase "Змінити тему" as UC21
+    usecase "Змінити мову" as UC22
+    usecase "Експорт даних" as UC23
+  }
+}
+
+' Connections for Admin
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+Admin --> UC9
+Admin --> UC10
+Admin --> UC11
+Admin --> UC12
+Admin --> UC13
+Admin --> UC14
+Admin --> UC15
+Admin --> UC16
+Admin --> UC17
+Admin --> UC18
+Admin --> UC19
+Admin --> UC20
+Admin --> UC21
+Admin --> UC22
+Admin --> UC23
+
+' Connections for Project Manager
+PM --> UC1
+PM --> UC5
+PM --> UC6
+PM --> UC7
+PM --> UC9
+PM --> UC10
+PM --> UC11
+PM --> UC12
+PM --> UC13
+PM --> UC14
+PM --> UC15
+PM --> UC17
+PM --> UC18
+PM --> UC19
+PM --> UC20
+PM --> UC21
+PM --> UC22
+
+' Connections for Developer
+Dev --> UC1
+Dev --> UC5
+Dev --> UC9
+Dev --> UC13
+Dev --> UC14
+Dev --> UC15
+Dev --> UC17
+Dev --> UC18
+Dev --> UC19
+Dev --> UC20
+Dev --> UC21
+Dev --> UC22
+
+' Connections for Viewer
+Viewer --> UC1
+Viewer --> UC5
+Viewer --> UC9
+Viewer --> UC13
+Viewer --> UC20
+Viewer --> UC21
+Viewer --> UC22
+
+' Extensions and includes
+UC14 ..> UC1 : <<include>>
+UC15 ..> UC1 : <<include>>
+UC17 ..> UC1 : <<include>>
+UC19 ..> UC1 : <<include>>
+
+@enduml 

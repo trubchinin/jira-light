@@ -1,0 +1,53 @@
+@startuml sequence_login
+!theme blueprint
+
+title Діаграма послідовності: Процес авторизації
+
+actor User as user
+participant "LoginFrame" as login
+participant "AuthService" as auth
+participant "UserRepository" as repo
+database "Memory Storage" as storage
+
+user -> login : Ввести логін/пароль
+activate login
+
+login -> login : Валідувати поля
+alt Поля порожні
+    login -> user : Показати помилку
+else Поля заповнені
+    login -> auth : authenticate(username, password)
+    activate auth
+    
+    auth -> repo : findByUsername(username)
+    activate repo
+    
+    repo -> storage : get(username)
+    activate storage
+    storage --> repo : User або null
+    deactivate storage
+    
+    repo --> auth : User або null
+    deactivate repo
+    
+    alt Користувач не знайдений
+        auth --> login : AuthenticationException
+        login -> user : "Користувач не знайдений"
+    else Користувач знайдений
+        auth -> auth : validatePassword(password, user.password)
+        alt Неправильний пароль
+            auth --> login : AuthenticationException
+            login -> user : "Неправильний пароль"
+        else Пароль правильний
+            auth -> auth : setCurrentUser(user)
+            auth --> login : success
+            deactivate auth
+            
+            login -> login : close()
+            login -> user : Відкрити MainFrame
+            deactivate login
+        end
+    end
+end
+
+@enduml 
