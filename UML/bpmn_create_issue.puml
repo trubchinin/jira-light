@@ -2,68 +2,92 @@
 !theme plain
 skinparam backgroundColor white
 skinparam defaultFontName Arial
+skinparam swimlaneWidth same
 
-title Процес створення задачі (BPMN)
+title Процес створення задачі (BPMN 2.0)
 
-|Користувач|
+|#LightBlue|Користувач|
 start
 :Відкрити MainFrame;
-:Обрати проект з ProjectTreePanel;
-:Натиснути кнопку "Створити задачу"\nабо клавішу Ctrl+N;
+note right
+  Запуск головного вікна
+  програми JiraLite
+end note
+:Обрати проект з\nProjectTreePanel;
+:Натиснути "Створити задачу"\n(Ctrl+N);
 
-|MainFrame|
-:Перевірити чи обрана дошка;
-if (Дошка обрана?) then (так)
-  :Створити новий об'єкт Issue;
-  :Встановити status = TO_DO;
-  :Відкрити IssueDialog(null, board, user);
-else (ні)
-  :Показати помилку\n"Оберіть дошку для перегляду";
+|#LightGreen|MainFrame (System)|
+if (Дошка обрана?) then (Так)
+  :Створити новий\nоб'єкт Issue;
+  :Встановити\nstatus = TO_DO;
+  :Відкрити\nIssueDialog;
+else (Ні)
+  :Показати помилку\n"Оберіть дошку";
   stop
 endif
 
-|IssueDialog|
-:Показати форму створення;
-:Встановити заголовок "Створити задачу";
-:Ініціалізувати IssueCardModel;
-:Заповнити поля за замовчуванням\n(Priority.MEDIUM, Status.TO_DO);
+|#LightCyan|IssueDialog|
+:Показати форму\nстворення задачі;
+:Ініціалізувати\nIssueCardModel;
+:Встановити значення\nза замовчуванням;
+note right
+  Priority.MEDIUM
+  Status.TO_DO
+  Reporter = currentUser
+end note
 
-|Користувач|
-:Заповнити назву задачі (обов'язково);
+|#LightBlue|Користувач|
+:Заповнити назву задачі\n(обов'язкове поле);
 :Заповнити опис задачі;
-:Вибрати пріоритет (HIGHEST, HIGH, MEDIUM, LOW, LOWEST);
-:Вибрати виконавця;
-:Натиснути "Зберегти";
+:Вибрати пріоритет;
+note right
+  HIGHEST, HIGH, MEDIUM,
+  LOW, LOWEST
+end note
+:Вибрати виконавця\n(за бажанням);
+:Натиснути кнопку\n"Зберегти";
 
-|IssueDialog|
-:Валідувати дані форми;
-if (Дані валідні?) then (так)
-  :Створити Issue з форми;
-  :Викликати BoardService.createIssue();
-else (ні)
-  :Показати помилки валідації;
-  :Фокус на першому невалідному полі;
+|#LightCyan|IssueDialog|
+if (Валідація даних?) then (Успішно)
+  :Створити Issue\nз даних форми;
+  :Викликати BoardService.\ncreateIssue();
+else (Помилка)
+  :Показати помилки\nвалідації;
+  :Встановити фокус на\nпершому невалідному полі;
   stop
 endif
 
-|BoardService|
-:Отримати поточного користувача;
-:Встановити reporter = currentUser;
-:Зберегти Issue в репозиторії;
-:Додати Issue до проекту;
-:Повернути збережену Issue;
+|#LightYellow|BoardService|
+:Отримати поточного\nкористувача;
+:Встановити\nreporter = currentUser;
+:Зберегти Issue\nв репозиторії;
+:Додати Issue\nдо проекту;
+:Повернути збережену\nIssue з ID;
 
-|IssueDialog|
-:Встановити issueCreated = true;
-:Закрити діалог;
+|#LightCyan|IssueDialog|
+:Встановити\nissueCreated = true;
+:Закрити діалог\n(dispose);
 
-|MainFrame|
-:Оновити дошку (loadIssues);
-:Додати сповіщення в NotificationPanel;
-:Показати нову задачу в колонці TO_DO;
+|#LightGreen|MainFrame (System)|
+:Оновити дошку\n(loadIssues);
+:Додати сповіщення в\nNotificationPanel;
+:Показати нову задачу\nв колонці TO_DO;
 
-|Користувач|
-:Побачити нову задачу на дошці;
+|#LightBlue|Користувач|
+:Побачити нову задачу\nна дошці;
+note right
+  Задача з'являється
+  в колонці TO_DO
+  з унікальним ID
+end note
 stop
+
+legend right
+  |= Колір |= Учасник |
+  |<#LightBlue>| Користувач |
+  |<#LightGreen>| UI Компоненти |
+  |<#LightCyan>| Діалоги |
+  |<#LightYellow>| Бізнес-логіка |
+endlegend
 
 @enduml
