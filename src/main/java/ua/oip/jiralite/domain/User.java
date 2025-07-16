@@ -2,12 +2,13 @@ package ua.oip.jiralite.domain;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Base64;
 
+import ua.oip.jiralite.domain.enums.Role;
 import ua.oip.jiralite.domain.user.Permission;
 import ua.oip.jiralite.domain.user.RoleManager;
-import ua.oip.jiralite.domain.enums.Role;
 
 /**
  * Модель користувача системи.
@@ -19,6 +20,7 @@ public class User extends BaseEntity {
     private String fullName;
     private Role role;
     private String passwordHash;
+    private LocalDateTime lastLoginDate;
 
     /**
      * Повний конструктор для створення користувача
@@ -63,6 +65,16 @@ public class User extends BaseEntity {
 
     public Role   getRole()                { return role; }
     public void   setRole(Role r)          { this.role  = r; touch(); }
+
+    public LocalDateTime getLastLoginDate() { return lastLoginDate; }
+    
+    /**
+     * Оновлює час останнього входу користувача
+     */
+    public void updateLastLogin() {
+        this.lastLoginDate = LocalDateTime.now();
+        touch();
+    }
 
     /** Встановити пароль користувача (зберігається хеш) */
     public void setPassword(String password) {
@@ -129,5 +141,17 @@ public class User extends BaseEntity {
      */
     public boolean isGuest() {
         return role == Role.GUEST;
+    }
+    
+    /**
+     * Перевіряє, чи був користувач активний протягом останніх днів
+     * @param days кількість днів для перевірки
+     * @return true якщо користувач входив протягом вказаного періоду
+     */
+    public boolean isActiveInLastDays(int days) {
+        if (lastLoginDate == null) {
+            return false;
+        }
+        return lastLoginDate.isAfter(LocalDateTime.now().minusDays(days));
     }
 } 
