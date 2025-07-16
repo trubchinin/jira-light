@@ -8,9 +8,9 @@ import ua.oip.jiralite.domain.BoardColumn;
 import ua.oip.jiralite.domain.Comment;
 import ua.oip.jiralite.domain.Issue;
 import ua.oip.jiralite.domain.Project;
+import ua.oip.jiralite.domain.User;
 import ua.oip.jiralite.domain.enums.Status;
 import ua.oip.jiralite.domain.user.Permission;
-import ua.oip.jiralite.domain.User;
 import ua.oip.jiralite.repository.IssueRepository;
 import ua.oip.jiralite.repository.ProjectRepository;
 
@@ -212,5 +212,57 @@ public class BoardService {
         
         issueRepository.save(issue);
         return comment;
+    }
+    
+    /**
+     * Видаляє задачу з проекту
+     * @param issue задача для видалення
+     * @return true якщо задача була успішно видалена
+     */
+    public boolean deleteIssue(Issue issue) {
+        User currentUser = authService.getCurrentUser();
+        if (currentUser == null) {
+            throw new IllegalStateException("User not logged in");
+        }
+        
+        if (!currentUser.hasPermission(Permission.DELETE_ISSUE)) {
+            throw new IllegalStateException("User does not have permission to delete issues");
+        }
+        
+        if (!issue.getProject().getMembers().contains(currentUser)) {
+            throw new IllegalStateException("User is not a member of this project");
+        }
+        
+        // Перевіряємо чи може користувач видаляти цю задачу
+        // Адміністратор може видалити будь-яку задачу
+        // Звичайний користувач може видалити тільки свої задачі
+        if (!currentUser.isAdmin() && 
+            !issue.getReporter().equals(currentUser) && 
+            !issue.getAssignee().equals(currentUser)) {
+            throw new IllegalStateException("You can only delete your own issues");
+        }
+        
+        // Видаляємо задачу з колонки дошки
+        if (issue.getBoardColumn() != null) {
+            issue.getBoardColumn().removeIssue(issue);
+        }
+        
+        // Видаляємо задачу з проекту
+        issue.getProject().removeIssue(issue);
+        
+        // Видаляємо задачу з репозиторію
+        issueRepository.delete(issue);
+        
+        return true;
+    }
+    
+    /**
+     * Отримує кількість задач за статусом для проекту
+     * @param project проект
+     * @param status статус задач
+     * @return кількість задач
+     */
+    public long getIssueCountByStatus(Project project, Status status) {
+        return issueRepository.findByProjectAndStatus(project, status).size();
     }
 } 
