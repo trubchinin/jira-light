@@ -131,4 +131,69 @@ public class AuthServiceTest {
         assertFalse(authService.canEditIssue(), "Гість не має мати право редагувати задачі");
         assertFalse(authService.canDeleteIssue(), "Гість не має мати право видаляти задачі");
     }
+    
+    @Test
+    @DisplayName("Автентифікація з порожнім логіном має викликати виняток")
+    public void testEmptyUsernameAuthentication() {
+        // Тоді
+        Exception exception = assertThrows(AuthException.class, () -> {
+            // Коли
+            authService.signIn("", "password");
+        });
+        
+        assertTrue(exception.getMessage().contains("Невірний логін або пароль"), 
+                "Повідомлення про помилку має містити інформацію про невірний логін");
+        assertNull(authService.getCurrentUser(), "Поточний користувач має залишитися null");
+    }
+    
+    @Test
+    @DisplayName("Автентифікація з null логіном має викликати виняток")
+    public void testNullUsernameAuthentication() {
+        // Тоді
+        Exception exception = assertThrows(AuthException.class, () -> {
+            // Коли
+            authService.signIn(null, "password");
+        });
+        
+        assertTrue(exception.getMessage().contains("Невірний логін або пароль"), 
+                "Повідомлення про помилку має містити інформацію про невірний логін");
+        assertNull(authService.getCurrentUser(), "Поточний користувач має залишитися null");
+    }
+    
+    @Test
+    @DisplayName("Автентифікація з порожнім паролем має викликати виняток")
+    public void testEmptyPasswordAuthentication() {
+        // Тоді
+        Exception exception = assertThrows(AuthException.class, () -> {
+            // Коли
+            authService.signIn("admin", "");
+        });
+        
+        assertTrue(exception.getMessage().contains("Невірний логін або пароль"), 
+                "Повідомлення про помилку має містити інформацію про невірний пароль");
+        assertNull(authService.getCurrentUser(), "Поточний користувач має залишитися null");
+    }
+    
+    @Test
+    @DisplayName("Повторний вихід із системи має бути безпечним")
+    public void testMultipleLogout() throws AuthException {
+        // Дано
+        authService.signIn("admin", "qwerty");
+        authService.logout();
+        
+        // Коли - повторний logout
+        authService.logout();
+        
+        // Тоді
+        assertNull(authService.getCurrentUser(), "Поточний користувач має залишитися null");
+    }
+    
+    @Test
+    @DisplayName("Перевірка прав без автентифікації має повертати false")
+    public void testPermissionsWithoutAuthentication() {
+        // Тоді
+        assertFalse(authService.canCreateIssue(), "Неавтентифікований користувач не має мати права створювати задачі");
+        assertFalse(authService.canEditIssue(), "Неавтентифікований користувач не має мати права редагувати задачі");
+        assertFalse(authService.canDeleteIssue(), "Неавтентифікований користувач не має мати права видаляти задачі");
+    }
 } 
