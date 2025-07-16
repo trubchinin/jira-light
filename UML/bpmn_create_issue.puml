@@ -1,27 +1,69 @@
 @startuml bpmn_create_issue
-!theme blueprint
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
 
 title Процес створення задачі (BPMN)
 
-|Client (UI)|
+|Користувач|
 start
-:Відкрити форму "Create Issue";
-:Заповнити поля задачі;
-:Натиснути "Submit";
-:Відправити POST /api/issue;
+:Відкрити MainFrame;
+:Обрати проект з ProjectTreePanel;
+:Натиснути кнопку "Створити задачу"\nабо клавішу Ctrl+N;
 
-|Server (REST API)|
-:Отримати запит;
-:Валідувати дані;
-if (Дані валідні?) then (так)
-  :Зберегти задачу в репозиторії;
-  :Повернути 201 Created (JSON);
+|MainFrame|
+:Перевірити чи обрана дошка;
+if (Дошка обрана?) then (так)
+  :Створити новий об'єкт Issue;
+  :Встановити status = TO_DO;
+  :Відкрити IssueDialog(null, board, user);
 else (ні)
-  :Повернути 400 Bad Request;
+  :Показати помилку\n"Оберіть дошку для перегляду";
+  stop
 endif
 
-|Client (UI)|
-:Показати результат;
+|IssueDialog|
+:Показати форму створення;
+:Встановити заголовок "Створити задачу";
+:Ініціалізувати IssueCardModel;
+:Заповнити поля за замовчуванням\n(Priority.MEDIUM, Status.TO_DO);
+
+|Користувач|
+:Заповнити назву задачі (обов'язково);
+:Заповнити опис задачі;
+:Вибрати пріоритет (HIGHEST, HIGH, MEDIUM, LOW, LOWEST);
+:Вибрати виконавця;
+:Натиснути "Зберегти";
+
+|IssueDialog|
+:Валідувати дані форми;
+if (Дані валідні?) then (так)
+  :Створити Issue з форми;
+  :Викликати BoardService.createIssue();
+else (ні)
+  :Показати помилки валідації;
+  :Фокус на першому невалідному полі;
+  stop
+endif
+
+|BoardService|
+:Отримати поточного користувача;
+:Встановити reporter = currentUser;
+:Зберегти Issue в репозиторії;
+:Додати Issue до проекту;
+:Повернути збережену Issue;
+
+|IssueDialog|
+:Встановити issueCreated = true;
+:Закрити діалог;
+
+|MainFrame|
+:Оновити дошку (loadIssues);
+:Додати сповіщення в NotificationPanel;
+:Показати нову задачу в колонці TO_DO;
+
+|Користувач|
+:Побачити нову задачу на дошці;
 stop
 
 @enduml

@@ -1,39 +1,50 @@
 @startuml component_diagram
-!theme blueprint
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
 
 title Діаграма компонентів JiraLite
 
-package "Presentation Layer" {
-  [Swing UI] as UI
+package "jiralite-ui (Presentation Layer)" {
+  [Launcher] as Launcher
   [Login Frame] as LoginFrame
   [Main Frame] as MainFrame
   [Issue Dialog] as IssueDialog
+  [About Dialog] as AboutDialog
   [Settings Dialog] as SettingsDialog
+  [Project Tree Panel] as ProjectTreePanel
+  [Board Column Panel] as BoardColumnPanel
+  [Search Panel] as SearchPanel
+  [Search Result Panel] as SearchResultPanel
+  [Notification Panel] as NotificationPanel
+  [Issue Card Panel] as IssueCardPanel
 }
 
-package "Service Layer" {
+package "jiralite-service (Service Layer)" {
   [Auth Service] as AuthService
   [Board Service] as BoardService
-  [Issue Service] as IssueService
-  [User Service] as UserService
 }
 
-package "Repository Layer" {
+package "jiralite-service (Repository Layer)" {
   [User Repository] as UserRepo
   [Issue Repository] as IssueRepo
   [Project Repository] as ProjectRepo
   [Board Repository] as BoardRepo
+  [User Memory Repository] as UserMemoryRepo
 }
 
-package "Domain Model" {
+package "jiralite-domain (Domain Model)" {
   [User] as UserEntity
   [Issue] as IssueEntity
   [Project] as ProjectEntity
   [Board] as BoardEntity
   [Comment] as CommentEntity
+  [Priority] as PriorityEnum
+  [Status] as StatusEnum
+  [Role] as RoleEnum
 }
 
-package "REST API" {
+package "jiralite-service (REST API Module)" {
   [Health Controller] as HealthController
   [Issue Controller] as IssueController
   [Spring Boot App] as SpringApp
@@ -42,50 +53,67 @@ package "REST API" {
 package "Data Layer" {
   database "In-Memory Storage" as Memory {
     [ConcurrentHashMap]
+    [Test Users]
   }
   
   database "File System" as FS {
-    [Configuration Files]
     [Localization Files]
+    [Properties]
   }
 }
 
 ' UI Layer connections
-UI --> AuthService
-UI --> BoardService
-UI --> IssueService
-
+Launcher --> LoginFrame
 LoginFrame --> AuthService
+LoginFrame --> MainFrame
+
 MainFrame --> BoardService
-MainFrame --> IssueService
-IssueDialog --> IssueService
-SettingsDialog --> UserService
+MainFrame --> AuthService
+MainFrame --> ProjectTreePanel
+MainFrame --> BoardColumnPanel
+MainFrame --> SearchPanel
+MainFrame --> SearchResultPanel
+MainFrame --> NotificationPanel
+MainFrame --> IssueDialog
+MainFrame --> AboutDialog
+MainFrame --> SettingsDialog
+
+IssueDialog --> BoardService
+BoardColumnPanel --> IssueCardPanel
+SearchPanel --> BoardService
 
 ' Service Layer connections
 AuthService --> UserRepo
-BoardService --> BoardRepo
+BoardService --> UserRepo
 BoardService --> IssueRepo
-IssueService --> IssueRepo
-UserService --> UserRepo
+BoardService --> ProjectRepo
+BoardService --> BoardRepo
 
-' Repository connections
+' Repository implementations
+UserRepo --> UserMemoryRepo
+
+' Repository connections to domain
 UserRepo --> UserEntity
 IssueRepo --> IssueEntity
 ProjectRepo --> ProjectEntity
 BoardRepo --> BoardEntity
 
-' REST API connections
+UserEntity --> RoleEnum
+IssueEntity --> StatusEnum
+IssueEntity --> PriorityEnum
+
+' REST API connections (separate module)
 SpringApp --> HealthController
 SpringApp --> IssueController
-IssueController --> IssueService
 
 ' Data connections
-UserRepo --> Memory
+UserMemoryRepo --> Memory
 IssueRepo --> Memory
 ProjectRepo --> Memory
 BoardRepo --> Memory
 
-UI --> FS
-SpringApp --> Memory
+' UI resources
+MainFrame --> FS
+LoginFrame --> FS
 
 @enduml 

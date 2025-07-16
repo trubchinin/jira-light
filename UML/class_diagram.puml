@@ -1,5 +1,7 @@
 @startuml class_diagram
-!theme blueprint
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
 
 title Діаграма класів JiraLite Domain Model
 
@@ -9,11 +11,16 @@ package "Domain Model" {
     - Long id
     - String username
     - String email
-    - String password
+    - String fullName
     - Role role
-    + login()
-    + logout()
-    + hasPermission()
+    - String passwordHash
+    - LocalDateTime lastLoginDate
+    - LocalDateTime createdAt
+    - LocalDateTime updatedAt
+    + authenticate(password)
+    + updateLastLogin()
+    + isActiveInLastDays(days)
+    + hasPermission(permission)
   }
   
   class Project {
@@ -21,27 +28,23 @@ package "Domain Model" {
     - String name
     - String description
     - String key
-    - User owner
-    - List<Board> boards
-    + createBoard()
-    + addMember()
+    - User lead
+    - Set<User> members
+    - Set<Board> boards
+    - LocalDateTime createdAt
+    + addMember(user)
+    + removeMember(user)
+    + addBoard(board)
   }
   
   class Board {
     - Long id
     - String name
     - Project project
-    - List<BoardColumn> columns
-    + addColumn()
-    + moveIssue()
-  }
-  
-  class BoardColumn {
-    - Long id
-    - String name
-    - Status status
-    - Integer order
     - List<Issue> issues
+    - LocalDateTime createdAt
+    + addIssue(issue)
+    + removeIssue(issue)
   }
   
   class Issue {
@@ -55,9 +58,9 @@ package "Domain Model" {
     - Project project
     - LocalDateTime createdAt
     - LocalDateTime updatedAt
-    + changeStatus()
-    + assign()
-    + addComment()
+    + changeStatus(status)
+    + assign(user)
+    + addComment(comment)
   }
   
   class Comment {
@@ -69,33 +72,31 @@ package "Domain Model" {
   }
   
   enum Priority {
-    LOW
-    MEDIUM
+    HIGHEST
     HIGH
-    CRITICAL
+    MEDIUM
+    LOW
+    LOWEST
   }
   
   enum Status {
-    OPEN
+    TO_DO
     IN_PROGRESS
-    IN_REVIEW
     DONE
-    CLOSED
   }
   
   enum Role {
     ADMIN
-    PROJECT_MANAGER
-    DEVELOPER
-    VIEWER
+    USER
+    GUEST
   }
 }
 
 ' Relationships
-User ||--o{ Project : owns
+User ||--o{ Project : leads
+User }o--o{ Project : member_of
 Project ||--o{ Board : contains
-Board ||--o{ BoardColumn : has
-BoardColumn ||--o{ Issue : contains
+Board ||--o{ Issue : has
 Issue }o--|| User : assigned_to
 Issue }o--|| User : reported_by
 Issue ||--o{ Comment : has

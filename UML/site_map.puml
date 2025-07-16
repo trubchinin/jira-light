@@ -1,15 +1,61 @@
 @startmindmap site_map
-* Dashboard
-** Board
-*** Column – To Do
-*** Column – In Progress
-*** Column – Done
-*** Issue Details
-** Projects
-*** Project List
-*** Project Settings
-** Login
-** Settings
-*** Profile
-*** Language / Theme
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+
+title Навігаційна структура JiraLite
+
+* JiraLite
+** Launcher
+*** LoginFrame (Вхід в систему)
+**** Поля: логін, пароль
+**** Кнопка "Увійти"
+**** --> MainFrame (після успішної авторизації)
+** MainFrame (Головне вікно)
+*** Меню
+**** Файл
+***** Створити задачу (Ctrl+N)
+***** Вихід
+**** Вигляд
+***** Оновити (F5)
+**** Довідка
+***** Налаштування
+****** SettingsDialog
+******* Зовнішній вигляд (теми)
+******* Інтерфейс (масштаб)
+***** Про програму
+****** AboutDialog
+*** Ліва панель (Navigation)
+**** ProjectTreePanel
+***** Список проектів
+***** Дошки проектів
+**** SearchPanel
+***** Пошукове поле
+***** Фільтри: статус, пріоритет, виконавець
+***** Кнопки: Пошук, Скинути
+**** SearchResultPanel
+***** Результати пошуку
+***** Клік --> IssueDialog
+**** NotificationPanel
+***** Системні сповіщення
+***** Вкладки: Всі, Налаштування
+*** Права панель (Board)
+**** Заголовок дошки
+**** Kanban колонки
+***** TO_DO
+****** IssueCardPanel (картки задач)
+******* Подвійний клік --> IssueDialog
+***** IN_PROGRESS
+****** IssueCardPanel
+******* Drag & Drop між колонками
+***** DONE
+****** IssueCardPanel
+*** IssueDialog (Модальне вікно)
+**** Вкладка "Деталі задачі"
+***** Назва, опис, пріоритет, статус, виконавець
+**** Вкладка "Коментарі"
+***** Список коментарів
+***** Додати новий коментар
+**** Кнопки: Зберегти, Скасувати
+
 @endmindmap

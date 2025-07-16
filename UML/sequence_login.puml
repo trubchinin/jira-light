@@ -1,53 +1,82 @@
 @startuml sequence_login
-!theme blueprint
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
 
 title Діаграма послідовності: Процес авторизації
 
 actor User as user
-participant "LoginFrame" as login
-participant "AuthService" as auth
-participant "UserRepository" as repo
-database "Memory Storage" as storage
+participant "Launcher" as launcher
+participant "LoginFrame" as loginFrame
+participant "AuthService" as authService
+participant "UserMemoryRepository" as userRepo
+participant "MainFrame" as mainFrame
+participant "BoardService" as boardService
 
-user -> login : Ввести логін/пароль
-activate login
+user -> launcher : Запуск програми
+activate launcher
 
-login -> login : Валідувати поля
+launcher -> loginFrame : new LoginFrame(authService)
+activate loginFrame
+
+launcher -> loginFrame : setVisible(true)
+loginFrame -> user : Показати форму входу
+
+user -> loginFrame : Ввести логін/пароль
+user -> loginFrame : Натиснути "Увійти" або Enter
+
+loginFrame -> loginFrame : Валідація полів
 alt Поля порожні
-    login -> user : Показати помилку
+    loginFrame -> user : Показати помилку "Введіть дані"
 else Поля заповнені
-    login -> auth : authenticate(username, password)
-    activate auth
+    loginFrame -> authService : signIn(login, password)
+    activate authService
     
-    auth -> repo : findByUsername(username)
-    activate repo
+    authService -> userRepo : findByLogin(login)
+    activate userRepo
     
-    repo -> storage : get(username)
-    activate storage
-    storage --> repo : User або null
-    deactivate storage
+    note right of userRepo : Пошук серед тестових користувачів:\nadmin/qwerty (ADMIN)\njohn/1234 (USER)\nguest/guest (GUEST)
     
-    repo --> auth : User або null
-    deactivate repo
+    userRepo --> authService : User або null
+    deactivate userRepo
     
     alt Користувач не знайдений
-        auth --> login : AuthenticationException
-        login -> user : "Користувач не знайдений"
+        authService --> loginFrame : AuthException("Невірний логін")
+        loginFrame -> user : Показати помилку
     else Користувач знайдений
-        auth -> auth : validatePassword(password, user.password)
-        alt Неправильний пароль
-            auth --> login : AuthenticationException
-            login -> user : "Неправильний пароль"
-        else Пароль правильний
-            auth -> auth : setCurrentUser(user)
-            auth --> login : success
-            deactivate auth
+        authService -> authService : Перевірити пароль
+        
+        alt Пароль невірний
+            authService --> loginFrame : AuthException("Невірний пароль")
+            loginFrame -> user : Показати помилку
+        else Пароль вірний
+            authService -> authService : setCurrentUser(user)
+            authService -> userRepo : updateLastLogin()
+            authService --> loginFrame : User
+            deactivate authService
             
-            login -> login : close()
-            login -> user : Відкрити MainFrame
-            deactivate login
+            loginFrame -> loginFrame : dispose()
+            
+            loginFrame -> mainFrame : new MainFrame(boardService, messages, user)
+            activate mainFrame
+            
+            loginFrame -> mainFrame : setVisible(true)
+            mainFrame -> user : Показати головне вікно
+            
+            mainFrame -> boardService : getUserProjects()
+            activate boardService
+            boardService -> userRepo : findByProjectsContaining(user)
+            userRepo --> boardService : List<Project>
+            boardService --> mainFrame : projects
+            deactivate boardService
+            
+            mainFrame -> mainFrame : Ініціалізувати ProjectTreePanel
+            mainFrame -> mainFrame : Показати дошки та задачі
         end
     end
 end
+
+deactivate loginFrame
+deactivate launcher
 
 @enduml 
