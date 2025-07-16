@@ -5,9 +5,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
 
+import ua.oip.jiralite.domain.enums.Role;
 import ua.oip.jiralite.domain.user.Permission;
 import ua.oip.jiralite.domain.user.RoleManager;
-import ua.oip.jiralite.domain.enums.Role;
 
 /**
  * Модель користувача системи.
@@ -107,6 +107,10 @@ public class User extends BaseEntity {
      * Перевіряє, чи доступна певна дія для користувача
      */
     public boolean isActionAllowed(String action) {
+        // Исправление SP-75: Добавлена защита от NullPointerException
+        if (action == null || action.trim().isEmpty()) {
+            return false;
+        }
         return role != null && RoleManager.isActionAllowed(role.name(), action);
     }
     

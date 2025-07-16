@@ -96,6 +96,11 @@ public class Board {
 
     @Override
     public String toString() {
-        return name != null ? name : "Дошка " + id;
+        // Исправление SP-75: Добавлена защита от NullPointerException
+        if (name != null && !name.trim().isEmpty()) {
+            return name;
+        } else {
+            return "Дошка " + (id != null ? id : "без ID");
+        }
     }
 } 
