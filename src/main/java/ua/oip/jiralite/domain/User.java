@@ -119,6 +119,10 @@ public class User extends BaseEntity {
      * Перевіряє, чи доступна певна дія для користувача
      */
     public boolean isActionAllowed(String action) {
+        // Исправление SP-75: Добавлена защита от NullPointerException
+        if (action == null || action.trim().isEmpty()) {
+            return false;
+        }
         return role != null && RoleManager.isActionAllowed(role.name(), action);
     }
     
