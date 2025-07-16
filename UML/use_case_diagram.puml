@@ -13,25 +13,20 @@ actor "Гість\n(GUEST)" as Guest
 
 rectangle "JiraLite System" {
   
-  package "Автентифікація та безпека" {
+  package "Автентифікація" {
     usecase "Вхід в систему" as UC1
     usecase "Вихід з системи" as UC2
     usecase "Перегляд профілю" as UC3
   }
   
-  package "Управління проектами" {
-    usecase "Переглянути список проектів" as UC4
+  package "Проекти та дошки" {
+    usecase "Переглянути проекти" as UC4
     usecase "Створити проект" as UC5
     usecase "Редагувати проект" as UC6
     usecase "Видалити проект" as UC7
-    usecase "Додати учасника проекту" as UC8
-  }
-  
-  package "Робота з дошками" {
     usecase "Переглянути дошку" as UC9
     usecase "Створити дошку" as UC10
     usecase "Оновити дошку" as UC11
-    usecase "Перемістити задачу між колонками" as UC12
   }
   
   package "Управління задачами" {
@@ -40,121 +35,65 @@ rectangle "JiraLite System" {
     usecase "Редагувати власну задачу" as UC15
     usecase "Редагувати будь-яку задачу" as UC16
     usecase "Видалити задачу" as UC17
-    usecase "Призначити виконавця" as UC18
-    usecase "Змінити статус задачі" as UC19
-    usecase "Додати коментар" as UC20
-    usecase "Редагувати власний коментар" as UC21
+    usecase "Змінити статус" as UC19
+    usecase "Перемістити задачу" as UC12
   }
   
-  package "Пошук та фільтрація" {
+  package "Пошук та коментарі" {
     usecase "Пошук задач" as UC22
-    usecase "Фільтрувати за статусом" as UC23
-    usecase "Фільтрувати за пріоритетом" as UC24
-    usecase "Фільтрувати за виконавцем" as UC25
+    usecase "Фільтрувати задачі" as UC23
+    usecase "Додати коментар" as UC20
+    usecase "Редагувати коментар" as UC21
+    usecase "Призначити виконавця" as UC18
   }
   
-  package "Налаштування інтерфейсу" {
-    usecase "Змінити тему оформлення" as UC26
-    usecase "Змінити масштаб інтерфейсу" as UC27
-    usecase "Переглянути сповіщення" as UC28
+  package "Налаштування" {
+    usecase "Змінити тему" as UC26
+    usecase "Змінити масштаб" as UC27
     usecase "Налаштувати сповіщення" as UC29
-  }
-  
-  package "Довідкова інформація" {
-    usecase "Переглянути інформацію про програму" as UC30
+    usecase "Про програму" as UC30
   }
 }
 
-' Connections for Admin (повний доступ)
+' Admin connections (скорочені лінії)
 Admin --> UC1
-Admin --> UC2
-Admin --> UC3
-Admin --> UC4
 Admin --> UC5
 Admin --> UC6
 Admin --> UC7
-Admin --> UC8
-Admin --> UC9
-Admin --> UC10
-Admin --> UC11
-Admin --> UC12
-Admin --> UC13
-Admin --> UC14
 Admin --> UC16
 Admin --> UC17
-Admin --> UC18
-Admin --> UC19
-Admin --> UC20
-Admin --> UC21
-Admin --> UC22
-Admin --> UC23
-Admin --> UC24
-Admin --> UC25
-Admin --> UC26
-Admin --> UC27
-Admin --> UC28
-Admin --> UC29
-Admin --> UC30
 
-' Connections for User (обмежений доступ)
+' User connections
 User --> UC1
-User --> UC2
-User --> UC3
 User --> UC4
 User --> UC9
-User --> UC11
-User --> UC12
-User --> UC13
 User --> UC14
 User --> UC15
-User --> UC18
 User --> UC19
-User --> UC20
-User --> UC21
 User --> UC22
-User --> UC23
-User --> UC24
-User --> UC25
-User --> UC26
-User --> UC27
-User --> UC28
-User --> UC29
-User --> UC30
 
-' Connections for Guest (тільки перегляд)
+' Guest connections
 Guest --> UC1
-Guest --> UC2
-Guest --> UC3
 Guest --> UC4
 Guest --> UC9
-Guest --> UC13
+User --> UC13
 Guest --> UC22
-Guest --> UC23
-Guest --> UC24
-Guest --> UC25
-Guest --> UC26
-Guest --> UC27
-Guest --> UC28
-Guest --> UC30
 
-' Notes
-note right of Admin
-  Адміністратор має повний доступ
-  до всіх функцій системи,
-  включаючи управління
-  користувачами та проектами
+' Inheritance relationships
+UC15 --> UC16 : <<extends>>
+UC23 --> UC22 : <<extends>>
+
+note top of Admin
+  Повний доступ до системи
 end note
 
-note right of User
-  Користувач може створювати
-  та редагувати власні задачі,
-  працювати з дошками
+note top of User
+  Створення та редагування
+  власних задач
 end note
 
-note right of Guest
-  Гість має доступ тільки
-  для перегляду без можливості
-  редагування
+note top of Guest
+  Тільки перегляд
 end note
 
 @enduml 
