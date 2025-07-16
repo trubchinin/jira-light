@@ -1,0 +1,89 @@
+@startuml bpmn_search_issues
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam swimlaneWidth same
+
+title Процес пошуку та фільтрації задач (BPMN 2.0)
+
+|#LightBlue|Користувач|
+start
+:Відкрити панель пошуку\n(SearchPanel);
+:Ввести пошуковий запит\nв текстове поле;
+
+if (Бажає застосувати фільтри?) then (Так)
+  :Вибрати статус задачі\n(TO_DO, IN_PROGRESS, DONE);
+  :Вибрати пріоритет\n(HIGHEST, HIGH, MEDIUM, LOW, LOWEST);
+  :Вибрати виконавця\nз випадаючого списку;
+else (Ні)
+  note right
+    Пошук без додаткових
+    фільтрів, тільки за текстом
+  end note
+endif
+
+:Натиснути кнопку\n"Пошук" або Enter;
+
+|#LightCyan|SearchPanel|
+:Зібрати параметри пошуку;
+:Викликати підпроцес\n"ValidateSearchCriteria";
+
+if (Критерії валідні?) then (Так)
+  :Створити SearchCriteria об'єкт;
+  :Викликати BoardService.\nsearchIssues(criteria);
+else (Ні)
+  :Показати помилку\n"Введіть пошуковий запит";
+  stop
+endif
+
+|#LightYellow|BoardService|
+:Викликати підпроцес\n"ExecuteSearch";
+note right
+  Підпроцес пошуку задач
+  за критеріями з фільтрацією
+  та сортуванням
+end note
+
+if (Знайдено результати?) then (Так)
+  :Повернути List<Issue>;
+  
+  |#LightCyan|SearchPanel|
+  :Очистити SearchResultPanel;
+  :Викликати підпроцес\n"DisplaySearchResults";
+  note right
+    Відобразити знайдені задачі
+    в панелі результатів
+  end note
+  
+  |#LightBlue|Користувач|
+  :Побачити результати пошуку\nв SearchResultPanel;
+  
+  if (Бажає відкрити задачу?) then (Так)
+    :Подвійний клік на задачі;
+    
+    |#LightCyan|SearchResultPanel|
+    :Відкрити IssueDialog\nз обраною задачею;
+    stop
+  else (Ні)
+    if (Бажає змінити критерії?) then (Так)
+      :Натиснути "Скинути"\nабо змінити фільтри;
+      :Повернутися до початку;
+    else (Ні)
+      stop
+    endif
+  endif
+else (Ні)
+  |#LightCyan|SearchPanel|
+  :Показати повідомлення\n"Задачі не знайдені";
+  :Очистити SearchResultPanel;
+  stop
+endif
+
+legend right
+  |= Колір |= Компонент |
+  |<#LightBlue>| Користувач |
+  |<#LightCyan>| UI Панелі |
+  |<#LightYellow>| Business Logic |
+endlegend
+
+@enduml 

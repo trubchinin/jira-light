@@ -1,0 +1,91 @@
+@startuml bpmn_move_issue
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam swimlaneWidth same
+
+title Процес переміщення задачі між статусами (BPMN 2.0)
+
+|#LightBlue|Користувач|
+start
+:Натиснути та утримувати\nкартку задачі (IssueCardPanel);
+note right
+  Активація Drag & Drop
+  через MouseAdapter
+end note
+:Перетягнути картку\nна іншу колонку;
+
+|#LightGreen|ColumnDropTarget|
+:Обробити подію drop;
+:Отримати вихідну колонку\n(sourceColumn);
+:Отримати цільову колонку\n(targetColumn);
+
+if (sourceColumn == targetColumn?) then (Так)
+  :Відмінити операцію\n(немає змін);
+  stop
+else (Ні)
+  :Отримати Issue об'єкт\nз картки;
+  :Визначити новий статус\nза цільовою колонкою;
+  note right
+    TO_DO → IN_PROGRESS → DONE
+    або зворотний напрямок
+  end note
+endif
+
+|#LightCyan|MainFrame|
+:Показати діалог підтвердження\n"Змінити статус задачі?";
+
+|#LightBlue|Користувач|
+if (Підтвердити зміну?) then (Так)
+  :Натиснути "Так";
+else (Ні)
+  :Натиснути "Скасувати";
+  |#LightGreen|ColumnDropTarget|
+  :Повернути картку\nна початкову позицію;
+  stop
+endif
+
+|#LightYellow|BoardService|
+:Викликати підпроцес\n"ValidateStatusChange";
+note right
+  Перевірка прав доступу
+  та логіки переходів
+end note
+
+if (Зміна дозволена?) then (Так)
+  :Оновити issue.status\nна новий статус;
+  :Встановити issue.updatedAt\n= LocalDateTime.now();
+  :Зберегти зміни\nв репозиторії;
+  
+  |#LightCyan|MainFrame|
+  :Видалити картку\nз вихідної колонки;
+  :Додати картку\nв цільову колонку;
+  :Оновити лічильники\nзадач по колонках;
+  :Додати сповіщення\n"Статус задачі змінено";
+  
+  |#LightBlue|Користувач|
+  :Побачити задачу\nв новій колонці;
+  note right
+    Успішне переміщення задачі.
+    Статус оновлено в системі
+  end note
+  stop
+else (Ні)
+  |#LightYellow|BoardService|
+  :Кинути BusinessException\n("Неможливо змінити статус");
+  
+  |#LightCyan|MainFrame|
+  :Показати помилку користувачу;
+  :Повернути картку\nна початкову позицію;
+  stop
+endif
+
+legend right
+  |= Колір |= Компонент |
+  |<#LightBlue>| Користувач |
+  |<#LightGreen>| Drag & Drop Logic |
+  |<#LightCyan>| UI Components |
+  |<#LightYellow>| Business Logic |
+endlegend
+
+@enduml 

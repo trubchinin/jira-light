@@ -1,0 +1,52 @@
+@startuml bpmn_authenticate_user
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam swimlaneWidth same
+
+title Підпроцес автентифікації користувача (BPMN 2.0)
+
+|#LightYellow|AuthService|
+start
+:Отримати login та password\nз параметрів методу;
+:Викликати UserRepository.\nfindByLogin(login);
+
+if (Користувач знайдений?) then (Ні)
+  :Кинути AuthenticationException\n("Користувач не знайдений");
+  note right
+    Невірний логін.
+    Користувача з таким
+    ім'ям не існує
+  end note
+  stop
+else (Так)
+  :Отримати User.passwordHash;
+  :Викликати PasswordEncoder.\nverify(password, hash);
+  
+  if (Пароль вірний?) then (Ні)
+    :Кинути AuthenticationException\n("Невірний пароль");
+    note right
+      Пароль не співпадає
+      з збереженим хешем
+    end note
+    stop
+  else (Так)
+    :Встановити currentUser = user;
+    :Викликати user.updateLastLogin();
+    note right
+      Встановити поточний час
+      в поле lastLoginDate
+    end note
+    :Записати в логи\n"User logged in: " + username;
+    :Оновити користувача\nв репозиторії;
+    :Повернути User об'єкт;
+    note right
+      Успішна автентифікація.
+      Користувач авторизований
+      в системі
+    end note
+    stop
+  endif
+endif
+
+@enduml 

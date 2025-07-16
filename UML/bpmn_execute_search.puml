@@ -1,0 +1,70 @@
+@startuml bpmn_execute_search
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam swimlaneWidth same
+
+title Підпроцес виконання пошуку задач (BPMN 2.0)
+
+|#LightYellow|BoardService|
+start
+:Отримати SearchCriteria\nз параметрів методу;
+:Отримати всі задачі\nз поточного проекту;
+
+if (searchText не порожній?) then (Так)
+  :Фільтрувати за назвою\nта описом задачі;
+  note right
+    Пошук за допомогою
+    String.contains()
+    (case-insensitive)
+  end note
+else (Ні)
+  note right
+    Пропустити текстовий фільтр
+  end note
+endif
+
+if (status не null?) then (Так)
+  :Фільтрувати за статусом\nissue.status == criteria.status;
+else (Ні)
+  note right
+    Показати задачі всіх статусів
+  end note
+endif
+
+if (priority не null?) then (Так)
+  :Фільтрувати за пріоритетом\nissue.priority == criteria.priority;
+else (Ні)
+  note right
+    Показати задачі всіх пріоритетів
+  end note
+endif
+
+if (assignee не null?) then (Так)
+  :Фільтрувати за виконавцем\nissue.assignee == criteria.assignee;
+else (Ні)
+  note right
+    Показати задачі всіх виконавців
+  end note
+endif
+
+:Застосувати сортування\nза датою створення\n(найновіші перші);
+
+if (Результат не порожній?) then (Так)
+  :Обмежити кількість\nрезультатів (макс. 50);
+  note right
+    Для продуктивності
+    та зручності перегляду
+  end note
+  :Повернути List<Issue>;
+  stop
+else (Ні)
+  :Повернути порожній список;
+  note right
+    Жодна задача не відповідає
+    критеріям пошуку
+  end note
+  stop
+endif
+
+@enduml 

@@ -1,0 +1,90 @@
+@startuml bpmn_login_process
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam swimlaneWidth same
+
+title Процес авторизації користувача (BPMN 2.0)
+
+|#LightBlue|Користувач|
+start
+:Запустити JiraLite;
+note right
+  Запуск Launcher.main()
+end note
+:Побачити вікно входу\n(LoginFrame);
+
+|#LightGreen|System (Launcher)|
+:Ініціалізувати AuthService;
+:Створити LoginFrame;
+:Показати форму входу;
+
+|#LightBlue|Користувач|
+:Ввести логін;
+:Ввести пароль;
+:Натиснути "Увійти"\nабо клавішу Enter;
+
+|#LightCyan|LoginFrame|
+:Отримати дані з полів;
+:Викликати підпроцес\n"ValidateLoginData";
+note right
+  Підпроцес валідації
+  вхідних даних
+end note
+
+if (Дані валідні?) then (Так)
+  :Викликати AuthService.\nsignIn(login, password);
+else (Ні)
+  :Показати помилку\n"Заповніть всі поля";
+  stop
+endif
+
+|#LightYellow|AuthService|
+:Викликати підпроцес\n"AuthenticateUser";
+note right
+  Підпроцес перевірки
+  користувача в репозиторії
+end note
+
+if (Авторизація успішна?) then (Так)
+  :Встановити currentUser;
+  :Оновити lastLoginDate;
+  :Повернути User об'єкт;
+else (Ні)
+  :Кинути AuthenticationException;
+  |#LightCyan|LoginFrame|
+  :Показати помилку авторизації;
+  stop
+endif
+
+|#LightCyan|LoginFrame|
+:Закрити вікно входу\n(dispose);
+:Створити MainFrame\nз поточним користувачем;
+
+|#LightGreen|MainFrame|
+:Викликати підпроцес\n"LoadUserData";
+note right
+  Підпроцес завантаження
+  проектів і дошок користувача
+end note
+:Показати головне вікно;
+:Ініціалізувати панелі\n(ProjectTree, Search, Board);
+
+|#LightBlue|Користувач|
+:Побачити головне вікно\nз проектами та дошками;
+note right
+  Успішний вхід в систему.
+  Користувач може працювати
+  з задачами та проектами
+end note
+stop
+
+legend right
+  |= Колір |= Компонент |
+  |<#LightBlue>| Користувач |
+  |<#LightGreen>| System Components |
+  |<#LightCyan>| UI Frames |
+  |<#LightYellow>| Business Logic |
+endlegend
+
+@enduml 

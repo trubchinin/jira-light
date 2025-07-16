@@ -1,0 +1,51 @@
+@startuml bpmn_validate_login_data
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam swimlaneWidth same
+
+title Підпроцес валідації даних входу (BPMN 2.0)
+
+|#LightCyan|LoginFrame|
+start
+:Отримати текст з поля\nusernameField.getText();
+:Отримати текст з поля\npasswordField.getPassword();
+
+if (Логін порожній?) then (Так)
+  :Встановити помилку\n"Введіть логін";
+  :Встановити фокус на\nusernameField;
+  :Повернути false;
+  stop
+else (Ні)
+  if (Пароль порожній?) then (Так)
+    :Встановити помилку\n"Введіть пароль";
+    :Встановити фокус на\npasswordField;
+    :Повернути false;
+    stop
+  else (Ні)
+    if (Логін містить пробіли?) then (Так)
+      :Встановити помилку\n"Логін не може містити пробіли";
+      :Встановити фокус на\nusernameField;
+      :Повернути false;
+      stop
+    else (Ні)
+      if (Довжина логіну < 3?) then (Так)
+        :Встановити помилку\n"Логін занадто короткий";
+        :Встановити фокус на\nusernameField;
+        :Повернути false;
+        stop
+      else (Ні)
+        :Очистити попередні помилки;
+        note right
+          Всі перевірки пройдені успішно.
+          Дані готові для передачі
+          в AuthService
+        end note
+        :Повернути true;
+        stop
+      endif
+    endif
+  endif
+endif
+
+@enduml 

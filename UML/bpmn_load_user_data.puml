@@ -1,0 +1,46 @@
+@startuml bpmn_load_user_data
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam swimlaneWidth same
+
+title Підпроцес завантаження даних користувача (BPMN 2.0)
+
+|#LightGreen|MainFrame|
+start
+:Отримати currentUser\nз AuthService;
+:Викликати BoardService.\ngetUserProjects(user);
+
+if (Проекти знайдені?) then (Так)
+  :Ініціалізувати ProjectTreePanel\nз проектами користувача;
+  :Завантажити дошки\nдля кожного проекту;
+  :Завантажити задачі\nдля кожної дошки;
+  :Групувати задачі за статусом\n(TO_DO, IN_PROGRESS, DONE);
+  :Підрахувати кількість\nзадач по колонках;
+  :Вибрати перший проект\nв дереві за замовчуванням;
+  :Завантажити задачі\nпершої дошки;
+  :Відобразити колонки\nKanban дошки;
+  :Створити колонки\nTO_DO, IN_PROGRESS, DONE;
+  :Додати IssueCardPanel\nдля кожної задачі;
+  :Налаштувати Drag & Drop\nміж колонками;
+  :Оновити заголовок вікна\nз назвою проекту;
+  :Увімкнути всі елементи\nінтерфейсу;
+  note right
+    Інтерфейс готовий до роботи.
+    Користувач може створювати
+    та редагувати задачі
+  end note
+  stop
+else (Ні)
+  :Показати повідомлення\n"У вас немає проектів";
+  :Відобразити порожній\nProjectTreePanel;
+  :Деактивувати кнопки\nстворення задач;
+  note right
+    Користувач може тільки
+    переглядати інтерфейс
+    без можливості створення
+  end note
+  stop
+endif
+
+@enduml 
